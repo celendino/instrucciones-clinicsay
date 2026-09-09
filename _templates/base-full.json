@@ -210,7 +210,6 @@
   "serviceCatalog": {
     "treatments": [
       {
-        "id": "primera-visita",
         "name": "Primera visita",
         "description": "Consulta inicial de evaluación",
         "priceDescription": "Consultar en clínica",
@@ -430,13 +429,36 @@
           {
             "step": 1,
             "tools": [
-              "cancel_for_rescheduling"
+              "resolve_patient"
             ],
             "parallel": false,
-            "note": "Cancelar y liberar preparatoriamente la cita elegible. El backend conserva el target y sus sesiones; no inventar carePlanId ni plannedSessionIds."
+            "required": [],
+            "note": "Resolver el paciente cuando haya varios candidatos o el interlocutor hable de un tercero. Con un unico paciente objetivo DEFAULT puede continuar sin llamar esta tool."
           },
           {
             "step": 2,
+            "tools": [
+              "resolve_reschedule_target"
+            ],
+            "parallel": false,
+            "required": [
+              "hasPatientTarget"
+            ],
+            "note": "Resolver y persistir la cita exacta del paciente ANTES de liberarla. Pasar todas las pistas que ya dio el paciente (dia, hora, tratamiento), incluidas las de mensajes anteriores."
+          },
+          {
+            "step": 3,
+            "tools": [
+              "cancel_for_rescheduling"
+            ],
+            "parallel": false,
+            "required": [
+              "hasResolvedRescheduleTarget"
+            ],
+            "note": "Cancelar y liberar preparatoriamente la cita identificada ANTES de pedir o consultar la nueva fecha. El backend conserva el target y sus sesiones; no inventar carePlanId ni plannedSessionIds."
+          },
+          {
+            "step": 4,
             "tools": [
               "resolve_availability_query"
             ],
@@ -444,10 +466,10 @@
             "required": [
               "hasCancelledRescheduleTarget"
             ],
-            "note": "Resolver las nuevas fechas que pide el paciente despues de capturar el target."
+            "note": "Resolver las nuevas fechas que pide el paciente despues de liberar la cita."
           },
           {
-            "step": 3,
+            "step": 5,
             "tools": [
               "check_availability"
             ],
@@ -456,22 +478,25 @@
               "hasCancelledRescheduleTarget",
               "hasResolvedAvailabilityQuery"
             ],
-            "note": "Buscar nuevos horarios (condicion: dates_resolved). Mantener mismo professionalId de la cita original como preferencia. Para mismo dia: filtrar slots del dia actual."
+            "note": "Buscar nuevos horarios con las fechas resueltas y el tratamiento de la cita liberada. Mantener el profesional original como preferencia, nunca como exigencia."
           },
           {
-            "step": 4,
+            "step": 6,
             "tools": [
               "schedule_block"
             ],
             "parallel": false,
             "required": [
+              "hasResolvedPatient",
               "hasCancelledRescheduleTarget",
               "hasShownSlots"
             ],
-            "note": "Agendar la NUEVA cita solo con disponibilidad comprobada en el turno actual (condicion: slot_selected). Si el horario elegido ya no esta libre, informar que no esta disponible y ofrecer alternativas reales. El backend toma carePlanId y plannedSessionIds del target cancelado."
+            "note": "Agendar la NUEVA cita solo con disponibilidad comprobada en el turno actual. Si el horario elegido ya no esta libre, informar que no esta disponible y ofrecer alternativas reales. El backend toma carePlanId y plannedSessionIds del target cancelado."
           }
         ],
         "allowedTools": [
+          "resolve_patient",
+          "resolve_reschedule_target",
           "cancel_for_rescheduling",
           "resolve_availability_query",
           "check_availability",
@@ -506,15 +531,59 @@
           {
             "step": 1,
             "tools": [
-              "resolve_availability_query",
-              "check_availability"
+              "resolve_patient"
             ],
             "parallel": false,
             "required": [],
-            "note": "SOLO si el paciente ya ha dado un dia o una franja. Consultar e informar que opciones hay; NUNCA afirmar que la cita se ha movido ni prometer una busqueda futura: se consulta y se dice lo que hay."
+            "note": "Resolver el paciente cuando haya varios candidatos o el interlocutor hable de un tercero. Con un unico paciente objetivo DEFAULT puede continuar sin llamar esta tool."
+          },
+          {
+            "step": 2,
+            "tools": [
+              "resolve_reschedule_target"
+            ],
+            "parallel": false,
+            "required": [
+              "hasPatientTarget"
+            ],
+            "note": "Resolver el foco exacto antes de consultar o prometer cualquier horario."
+          },
+          {
+            "step": 3,
+            "tools": [
+              "resolve_availability_query"
+            ],
+            "parallel": false,
+            "required": [
+              "hasResolvedRescheduleTarget"
+            ],
+            "note": "Cuando el paciente ya ha dado un dia o una franja, resolver las fechas es obligatorio antes de responder; NUNCA prometer una busqueda futura."
+          },
+          {
+            "step": 4,
+            "tools": [
+              "check_availability"
+            ],
+            "parallel": false,
+            "required": [
+              "hasResolvedRescheduleTarget",
+              "hasResolvedAvailabilityQuery"
+            ],
+            "note": "Consultar la agenda y decir que opciones hay. Los huecos son informativos: no autorizan cancelar, mover ni crear la cita desde este flujo."
           }
         ],
-        "responseTemplateKey": "reschedule_inquiry_full"
+        "responseTemplateKey": "reschedule_inquiry_full",
+        "allowedTools": [
+          "resolve_patient",
+          "resolve_reschedule_target",
+          "resolve_availability_query",
+          "check_availability"
+        ],
+        "selection": {
+          "requiredCapabilities": [
+            "hasActiveAppointment"
+          ]
+        }
       },
       "cancellation_inquiry": {
         "intent": "existing_appointment_cancellation_inquiry",

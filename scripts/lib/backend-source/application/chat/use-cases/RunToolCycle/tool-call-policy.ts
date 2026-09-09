@@ -1,9 +1,6 @@
 import type { ConversationCapabilities } from '../../../../domain/chat/conversation-state';
 import type { ToolFlow } from '../../../../domain/chat/structured-logic';
-import { getFlowToolNames } from '../../../../domain/chat/flow-terminal-tools';
 import { ALL_TOOL_NAMES } from '../../../../domain/chat/tool-names';
-import { getActiveSteps } from '../../../../domain/chat/step-conditions';
-import type { StepConditionFacts } from '../../../../domain/chat/step-conditions';
 
 export function checkStepRequirements(
   toolName: string,
@@ -11,8 +8,6 @@ export function checkStepRequirements(
   activeFlow: ToolFlow | null,
   capabilities: ConversationCapabilities,
   chatMode: 'full' | 'tasks-only',
-  customStateValues: Record<string, string> = {},
-  conditionFacts: StepConditionFacts = { customStateValues },
 ): { allowed: boolean; reason?: string } {
   if (
     chatMode === 'full' &&
@@ -24,6 +19,18 @@ export function checkStepRequirements(
       reason: activeFlow?.intent === 'existing_appointment_rescheduling'
         ? 'Full rescheduling must have shown slots (call check_availability first) before schedule_block.'
         : 'Full booking requires shown slots before schedule_block.',
+    };
+  }
+
+  if (
+    chatMode === 'full' &&
+    activeFlow?.intent === 'existing_appointment_rescheduling' &&
+    toolName === 'cancel_for_rescheduling' &&
+    !capabilities.hasResolvedRescheduleTarget
+  ) {
+    return {
+      allowed: false,
+      reason: 'Full rescheduling must resolve_reschedule_target before cancel_for_rescheduling.',
     };
   }
 
@@ -56,15 +63,52 @@ export function checkStepRequirements(
     return { allowed: true };
   }
 
-  const activeStepsWithTool = getActiveSteps(activeFlow, conditionFacts)
-    .filter((step) => step.tools.includes(toolName));
-  const terminalStep = TERMINAL_TOOL_NAMES.has(toolName) && activeStepsWithTool.some((step) => (step.customState?.length ?? 0) > 0);
-  if (terminalStep) {
-    const missing = Array.from(new Set(activeStepsWithTool.flatMap((step) => (step.customState ?? []).map((field) => field.key))))
-      .filter((key) => !customStateValues[key]);
-    if (missing.length > 0) {
-      return { allowed: false, reason: `No se puede ejecutar '${toolName}': faltan campos custom del step activo: ${missing.join(', ')}.` };
-    }
+  if (
+    activeFlow.intent === 'existing_appointment_reschedule_inquiry' &&
+    (toolName === 'check_availability' || toolName === 'resolve_availability_query') &&
+    !capabilities.hasResolvedRescheduleTarget
+  ) {
+    return {
+      allowed: false,
+      reason: 'Reschedule inquiry must resolve_reschedule_target before consulting availability.',
+    };
+  }
+
+  // Rescheduling consults the agenda only AFTER the preparatory cancellation;
+  // `cancel_for_rescheduling` consumes the resolved target, so the cancelled
+  // capture is the evidence here. The inquiry never cancels: it needs the
+  // resolved target.
+  if (
+    activeFlow.intent === 'existing_appointment_rescheduling' &&
+    (toolName === 'resolve_availability_query' || toolName === 'check_availability') &&
+    !capabilities.hasCancelledRescheduleTarget
+  ) {
+    return {
+      allowed: false,
+      reason: `${toolName} requires cancel_for_rescheduling before consulting availability.`,
+    };
+  }
+  if (
+    activeFlow.intent === 'existing_appointment_reschedule_inquiry' &&
+    (toolName === 'resolve_availability_query' || toolName === 'check_availability') &&
+    !capabilities.hasResolvedRescheduleTarget
+  ) {
+    return {
+      allowed: false,
+      reason: `${toolName} requires resolve_reschedule_target before consulting availability.`,
+    };
+  }
+
+  if (
+    (activeFlow.intent === 'existing_appointment_rescheduling' ||
+      activeFlow.intent === 'existing_appointment_reschedule_inquiry') &&
+    toolName === 'check_availability' &&
+    !capabilities.hasResolvedAvailabilityQuery
+  ) {
+    return {
+      allowed: false,
+      reason: 'check_availability requires resolve_availability_query with resolved dates first.',
+    };
   }
 
   if (
@@ -86,23 +130,6 @@ export function checkStepRequirements(
     activeFlow.intent === 'new_appointment_scheduling'
   )) {
     if (
-      activeFlow.intent === 'existing_appointment_rescheduling' &&
-      toolName !== 'cancel_for_rescheduling' &&
-      !capabilities.hasCancelledRescheduleTarget
-    ) {
-      return {
-        allowed: false,
-        reason: 'Full rescheduling must call cancel_for_rescheduling before continuing.',
-      };
-    }
-    if (toolName === 'check_availability' && !capabilities.hasResolvedAvailabilityQuery) {
-      return {
-        allowed: false,
-        reason:
-          'Full rescheduling must call resolve_availability_query before check_availability.',
-      };
-    }
-    if (
       toolName === 'schedule_block' &&
       !capabilities.hasShownSlots
     ) {
@@ -112,10 +139,30 @@ export function checkStepRequirements(
           'Full booking must have shown slots before schedule_block.',
       };
     }
+    if (
+      activeFlow.intent === 'existing_appointment_rescheduling' &&
+      toolName === 'schedule_block' &&
+      !capabilities.hasCancelledRescheduleTarget
+    ) {
+      return {
+        allowed: false,
+        reason: 'Full rescheduling must call cancel_for_rescheduling before schedule_block.',
+      };
+    }
   }
 
   // Derive the allowed set of tools for this flow
-  const flowTools = new Set(getFlowToolNames(activeFlow));
+  const flowTools = new Set<string>();
+  if (activeFlow.allowedTools && activeFlow.allowedTools.length > 0) {
+    for (const tool of activeFlow.allowedTools) flowTools.add(tool);
+  } else {
+    for (const step of activeFlow.steps ?? []) {
+      for (const tool of step.tools) flowTools.add(tool);
+    }
+  }
+
+
+
   // If the tool is not in the flow's allowed set, deny it
   if (!flowTools.has(toolName)) {
     const available = Array.from(flowTools).join(', ') || 'none';
@@ -170,5 +217,3 @@ export function checkStepRequirements(
   }
   return { allowed: false, reason };
 }
-
-const TERMINAL_TOOL_NAMES = new Set(['create_task', 'schedule_block', 'manage_schedule_block_status', 'cancel_for_rescheduling']);

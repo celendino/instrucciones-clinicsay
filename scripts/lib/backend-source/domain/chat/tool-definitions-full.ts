@@ -176,8 +176,8 @@ export const TOOL_CANCEL_FOR_RESCHEDULING: ChatToolDefinition = {
   strict: true,
   description:
     'Cancel and release one existing appointment as preparation for rescheduling. ' +
-    'Use only in a configured rescheduling flow, before asking for or checking the new date. ' +
-    'The backend validates the unique eligible appointment and returns the persisted target; never provide carePlanId or plannedSessionIds.',
+    'Use only after resolve_reschedule_target in a configured rescheduling flow, before asking for or checking the new date. ' +
+    'It consumes the persisted reschedule target; never provide carePlanId or plannedSessionIds.',
   parameters: {
     type: 'object',
     additionalProperties: false,
@@ -213,6 +213,11 @@ export const TOOL_MANAGE_SCHEDULE_BLOCK_STATUS: ChatToolDefinition = {
         type: 'string',
         enum: ['confirm', 'cancel', 'on_the_way'],
         description: 'Action to perform on the schedule block.',
+      },
+      referenceType: {
+        type: 'string',
+        enum: ['reminder_reference'],
+        description: 'Required when managing a short response to the active reminder. The model must explicitly classify it as reminder_reference; the backend validates the block ID.',
       },
       reason: {
         type: 'string',
@@ -315,7 +320,7 @@ export const TOOL_RESOLVE_PATIENT: ChatToolDefinition = {
     'USAR ANTES de schedule_block o create_task de agendamiento si no hay paciente resuelto. ' +
     'Solo puedes pasar firstName, lastName o phone si el INTERLOCUTOR los dijo EXPLICITAMENTE en su mensaje actual o en mensajes anteriores de ESTA conversacion. ' +
     'NUNCA uses CALLER_PHONE, ASSOCIATED_PATIENTS ni datos del contacto de Kommo como datos confirmados sin autorizacion del interlocutor. ' +
-    'El telefono debe ser el que el interlocutor haya proporcionado explicitamente; useInterlocutorPhone se conserva solo por compatibilidad y no sustituye phone. ' +
+    'El telefono debe ser el que el interlocutor haya proporcionado explicitamente; solo usa el telefono del contacto si el interlocutor indico explicitamente que es el numero desde el que escribe y useInterlocutorPhone es true. ' +
     'Si falta alguno de estos datos, el sistema retorna status "needs_info" y pide los datos faltantes. ' +
     'El sistema busca por telefono + nombre + apellido; si no encuentra ningun paciente, lo crea automaticamente con los datos proporcionados. ' +
     'El campo isForInterlocutor solo sirve para auditoria/logging; NO altera la busqueda ni la creacion.',
@@ -341,10 +346,61 @@ export const TOOL_RESOLVE_PATIENT: ChatToolDefinition = {
       },
       useInterlocutorPhone: {
         type: 'boolean',
-        description: 'Legacy compatibility flag. It is ignored for patient identity resolution; provide the explicit phone value instead.',
+        description: 'Set true solo si el interlocutor indico explicitamente que se use el telefono del contacto; nunca lo actives automaticamente.',
       },
     },
     required: ['firstName', 'lastName', 'phone', 'isForInterlocutor', 'useInterlocutorPhone'],
+  },
+};
+
+export const TOOL_RESOLVE_RESCHEDULE_TARGET: ChatToolDefinition = {
+  name: 'resolve_reschedule_target',
+  strict: true,
+  description:
+    'Resolve the single existing appointment that the patient means to reschedule. ' +
+    'Use before cancel_for_rescheduling. ' +
+    'PASS EVERY CLUE THE CONVERSATION ALREADY CONTAINS — date, treatment and professional — including clues given in EARLIER messages, not only in the last one. ' +
+    'An empty field states that the patient never gave that clue. Dropping a clue the patient did give makes the backend see several possible appointments and forces the bot to ask "which one?" about something already answered. ' +
+    'The backend selects the unique matching appointment and derives whether it is the reminder. Never invent IDs.',
+  parameters: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      scheduleBlockId: {
+        type: 'string',
+       description: 'Optional exact Block ID copied from the active patient context. Never invent one; prefer date/professional/treatment clues when the patient did not provide an ID.',
+      },
+      date: {
+        type: 'string',
+        description: 'Appointment date in YYYY-MM-DD. REQUIRED whenever the patient named a day at any point in the conversation ("mi cita del 9 de septiembre" -> "2026-09-09"), even if they named it several messages ago. Empty ONLY when no day has been mentioned at all.',
+      },
+      professionalId: {
+        type: 'string',
+        description: 'Professional ID from the patient context whenever it is known. Empty only when unknown.',
+      },
+      professionalName: {
+        type: 'string',
+        description: 'Professional name as stated by the patient at any point in the conversation, or as shown in context. Empty only when no professional has been mentioned.',
+      },
+      treatmentId: {
+        type: 'string',
+        description: 'Treatment ID from the patient context whenever it is known. Empty only when unknown.',
+      },
+      treatmentName: {
+        type: 'string',
+        description: 'Treatment name as stated by the patient at any point in the conversation, or as shown in context. A partial name is useful ("mesoterapia" matches "Mesoterapia Corporal"). Empty only when no treatment has been mentioned.',
+      },
+      referenceType: {
+        type: 'string',
+        enum: ['reminder_reference', 'other_appointment_reference', 'third_party_reference', 'unrelated_request', 'ambiguous_reference'],
+        description: 'Explicit classification of what the patient refers to. Short confirmation/delay of the reminder uses reminder_reference; another date/professional/treatment uses other_appointment_reference; another person uses third_party_reference; unrelated or unclear messages use the corresponding value.',
+      },
+      confirmPivot: {
+        type: 'boolean',
+        description: 'Set true only after the patient explicitly confirms moving a different appointment after a previous rescheduling cancellation.',
+      },
+    },
+    required: ['scheduleBlockId', 'date', 'professionalId', 'professionalName', 'treatmentId', 'treatmentName', 'referenceType', 'confirmPivot'],
   },
 };
 
@@ -486,6 +542,7 @@ export const ALL_CHAT_TOOLS: ChatToolDefinition[] = [
   TOOL_MANAGE_ALL_SCHEDULE_BLOCKS_FOR_DATE,
   TOOL_CREATE_TASK,
   TOOL_RESOLVE_PATIENT,
+  TOOL_RESOLVE_RESCHEDULE_TARGET,
   TOOL_RESOLVE_PROFESSIONAL,
   TOOL_RESOLVE_TREATMENT,
   TOOL_LOOKUP_PATIENT,

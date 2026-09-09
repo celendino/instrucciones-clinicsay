@@ -29,7 +29,8 @@ export const CRITICAL_INTENTS: Array<{ category: string; description: string }> 
  * must keep the resolve step so the bot asks for the missing date or time.
  */
 export const TURN_START_CAPABILITIES = [
-  'hasResolvedPatient',
+   'hasResolvedPatient',
+   'hasPatientTarget',
   'hasActiveAppointment',
   'hasCancelledRescheduleTarget',
   'hasConcreteDateTime',
@@ -39,6 +40,7 @@ export const TURN_START_CAPABILITY_SET = new Set<string>(TURN_START_CAPABILITIES
 export const VALID_CAPABILITIES = new Set([
   'hasResolvedTreatment',
   'hasResolvedPatient',
+  'hasPatientTarget',
   'hasResolvedProfessional',
   // Availability evidence is turn-scoped; inherited slots must not authorize booking.
   'hasShownSlots',
@@ -48,6 +50,7 @@ export const VALID_CAPABILITIES = new Set([
   'hasResolvedAvailabilityQuery',
   'hasCancelledRescheduleTarget',
   'hasActiveAppointment',
+  'hasResolvedRescheduleTarget',
 ]);
 
 /**
@@ -59,6 +62,7 @@ export const VALID_CAPABILITIES = new Set([
 export const CAPABILITY_ESTABLISHERS: Record<string, string[]> = {
   hasResolvedTreatment: ['resolve_treatment'],
   hasResolvedPatient: ['resolve_patient', 'lookup_patient'],
+  hasPatientTarget: [], // Established by patient-target resolution in a later phase.
   hasResolvedProfessional: ['resolve_professional'],
   hasShownSlots: ['check_availability'],
   hasSelectedSlot: [], // established by the patient choosing a slot, not by a tool
@@ -66,6 +70,7 @@ export const CAPABILITY_ESTABLISHERS: Record<string, string[]> = {
   hasCreatedTask: ['create_task'],
   hasResolvedAvailabilityQuery: ['resolve_availability_query'],
   hasCancelledRescheduleTarget: ['cancel_for_rescheduling'],
+  hasResolvedRescheduleTarget: ['resolve_reschedule_target'],
   hasActiveAppointment: [], // deterministic, computed from conversation context (not a tool)
 };
 

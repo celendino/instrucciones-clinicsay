@@ -95,15 +95,15 @@ During rescheduling, the preparatory cancellation must never run before — or a
 
 **Why:** cancelling before the new appointment exists leaves the patient **with no appointment at all** when no slot is found, when they do not pick one, or when they simply stop replying. This is irrecoverable data loss and it happened in production.
 
-**Safe reschedule order (full mode):** `cancel_for_rescheduling` → `resolve_availability_query` → `check_availability` → `schedule_block`. The preparatory cancellation captures and persists the backend-owned target; `manage_schedule_block_status` is not the cancellation route for this flow. The original professional is a backend preference, not a required patient choice. `schedule_block` requires availability evidence from the current turn; inherited slots never authorize booking. If the selected time is occupied, report that it is no longer available and offer real alternatives. Before booking, the backend reconciles captured sessions against current state and keeps only `ACTIVE` + `PENDING` sessions for the captured treatment: reuse `CARE_PLAN` when any remain, or use a backend-authorized `STANDALONE` fallback when none remain. The LLM/advisor does not select the mode or provide internal metadata or temporal fields such as `expiresAt`.
+**Safe reschedule order (full mode):** `resolve_patient` → `resolve_reschedule_target` → `cancel_for_rescheduling` → `resolve_availability_query` → `check_availability` → `schedule_block`. Identity comes first (with two patients on the same phone, resolving the appointment before the patient picks for them), then the exact appointment is resolved and persisted, and only then is it released. `resolve_patient` may be skipped at runtime when there is a single DEFAULT patient target, but it must be declared; the `resolve_reschedule_target` step must require `hasPatientTarget`. The preparatory cancellation persists the backend-owned target; `manage_schedule_block_status` is not the cancellation route for this flow. The original professional is a backend preference, not a required patient choice. `schedule_block` requires availability evidence from the current turn; inherited slots never authorize booking. If the selected time is occupied, report that it is no longer available and offer real alternatives. Before booking, the backend reconciles captured sessions against current state and keeps only `ACTIVE` + `PENDING` sessions for the captured treatment: reuse `CARE_PLAN` when any remain, or use a backend-authorized `STANDALONE` fallback when none remain. The LLM/advisor does not select the mode or provide internal metadata or temporal fields such as `expiresAt`.
 
-**Exception:** when the flow declares `selection.requiredCapabilities: [..., "hasConcreteDateTime"]` — the patient already gave a concrete date AND time at turn start — `resolve_availability_query` MAY be omitted and the mandatory order becomes `cancel_for_rescheduling` → `check_availability` → `schedule_block`.
+**Exception:** when the flow declares `selection.requiredCapabilities: [..., "hasConcreteDateTime"]` — the patient already gave a concrete date AND time at turn start — `resolve_availability_query` MAY be omitted and the mandatory order becomes `resolve_patient` → `resolve_reschedule_target` → `cancel_for_rescheduling` → `check_availability` → `schedule_block`. The identity and target steps are never optional: they are what decides WHICH appointment gets released.
 
 **Full booking identity rule:** before a new full booking flow executes `schedule_block`, it must execute `resolve_patient`. A rescheduling flow with a backend-owned `hasCancelledRescheduleTarget` is the exception: the target already identifies the original patient and `resolve_patient` must not replace that identity. The patient-resolution step for new bookings may occur before or after availability is resolved and checked; the invariant is only that identity is resolved before the appointment is reserved.
 
 **Rescheduling selection gate:** a reschedule flow (`existing_appointment_rescheduling`) MUST declare `selection: { requiredCapabilities: ["hasActiveAppointment"], alternativeRequiredCapabilities: ["hasCancelledRescheduleTarget"] }`. The alternative allows the flow to run when a reschedule target was already captured in a previous turn.
 
-**Reschedule inquiry (full mode):** a flow with intent `existing_appointment_reschedule_inquiry` in full mode MUST declare a step with `tools: ["resolve_availability_query", "check_availability"]`. Without them the flow has no tools at all, so when the patient gives a day or time the bot can only promise to look at the schedule — which is rejected and loops. The slots shown are informational and do not authorize booking; tools that modify the appointment (`cancel_for_rescheduling`, `schedule_block`, `manage_schedule_block_status`) stay forbidden here.
+**Reschedule inquiry (full mode):** a flow with intent `existing_appointment_reschedule_inquiry` in full mode MUST declare `resolve_patient` → `resolve_reschedule_target` → `resolve_availability_query` → `check_availability` in that order (`resolve_reschedule_target` before consulting availability: the bot must know which appointment it is talking about before it shows or promises any slot). Without them the flow has no tools at all, so when the patient gives a day or time the bot can only promise to look at the schedule — which is rejected and loops. The slots shown are informational and do not authorize booking; tools that modify the appointment (`cancel_for_rescheduling`, `schedule_block`, `manage_schedule_block_status`) stay forbidden here.
 
 A reschedule flow (`existing_appointment_rescheduling`) in `full` mode that can cancel MUST also be able to book: `schedule_block` has to be present in `steps` or `allowedTools`.
 
@@ -192,21 +192,9 @@ Flows reference registry entries by key; the text lives in `responseTemplates` (
   tools: string[];            // Tool names to execute in this step
   parallel: boolean;          // Execute in parallel?
   required?: string[];         // Required vs optional tools
-  customState?: { key: string; description: string; enum?: string[] }[];
-  when?: { key: string; equals?: string; in?: string[]; notIn?: string[]; exists?: boolean }[];
   note?: string;              // Explanatory note for the LLM
 }
 ```
-
-`customState` and `when` are allowed only on steps. Custom fields require a
-non-empty `snake_case` `key` and `description`; they are implicitly required,
-so `required` is not valid inside a custom field. Each `when` condition uses
-exactly one v1 operator: `equals`, `in`, `notIn`, or `exists`. References must
-point to custom fields or typed facts produced by earlier steps in the same
-flow (`treatmentId`, `treatmentName`, `patientIsNew`). Treatment IDs must be
-present in `serviceCatalog.treatments[].id` when the catalog uses IDs; catalogs
-without IDs remain compatible with legacy JSON. The internal
-`personalized_user_conversation_state` tool is never valid in clinic tools.
 
 ### `BusinessRule`
 
@@ -342,7 +330,7 @@ When both `manage_schedule_block_status` and `create_task` are configured in one
 ### Flows and Steps
 - Flow `intent` must exist in the catalog and should be unique per flow (one flow per intent). If the flow can create, move or destroy an appointment, that intent must be canonical.
 - `description` differentiates this flow from similar ones ("NEW session" vs. "move an ALREADY BOOKED appointment" vs. "confirm attendance").
-- Order steps logically. For full booking, `resolve_patient` must precede `schedule_block`, but it may be placed before or after availability resolution and checking. For full rescheduling, use `cancel_for_rescheduling` → `resolve_availability_query` → `check_availability` → `schedule_block`.
+- Order steps logically. For full booking, `resolve_patient` must precede `schedule_block`, but it may be placed before or after availability resolution and checking. For full rescheduling, use `resolve_patient` → `resolve_reschedule_target` → `cancel_for_rescheduling` → `resolve_availability_query` → `check_availability` → `schedule_block`.
 - `parallel: true` only when tools have no dependencies between them — and never for a destructive tool.
 - Flows using `manage_schedule_block_status` may set `responseTemplateKey`.
 - The last step must be the one that performs the flow's real action; steps do not contain response templates.
@@ -370,7 +358,7 @@ When both `manage_schedule_block_status` and `create_task` are configured in one
 ### Flow safety (blocking — see "Destructive Tools Come Last" and "Response Template")
 - In full rescheduling, `manage_schedule_block_status` is not the preparatory cancellation; use `cancel_for_rescheduling` and then the replacement-booking sequence.
 - A `full`-mode reschedule flow that can cancel must also have `schedule_block` available.
-- `allowedTools` is an UNORDERED whitelist and can never anchor the safe order. In a full reschedule, the ordered `steps` must contain `cancel_for_rescheduling`, `resolve_availability_query`, `check_availability`, and `schedule_block` in that order; `schedule_block` must be the terminal booking step. `manage_schedule_block_status` belongs to definitive cancellation, confirmation, or on-the-way flows, not to the preparatory rescheduling sequence.
+- `allowedTools` is an UNORDERED whitelist and can never anchor the safe order. In a full reschedule, the ordered `steps` must contain `resolve_patient`, `resolve_reschedule_target`, `cancel_for_rescheduling`, `resolve_availability_query`, `check_availability`, and `schedule_block` in that order; `schedule_block` must be the terminal booking step. `manage_schedule_block_status` belongs to definitive cancellation, confirmation, or on-the-way flows, not to the preparatory rescheduling sequence.
 - A target only continues inside a trusted conversation context. `continuous`, `short_break`, `same_period` and `recent` may continue it; `distant` starts a new conversation and discards the target, operational intent, inherited slots and prior availability.
 - Appointment-writing flows must use a canonical intent. Free intents are valid outside the reserved `new_appointment_` and `existing_appointment_` namespaces when their flows use only non-writing tools.
 - In a full booking flow, `resolve_patient` must be in a step before `schedule_block`; no relative ordering with availability tools is required.
@@ -424,7 +412,7 @@ The **last bot message** determines the meaning of short replies.
 **Symptom:** a flow or rule references `intent: "X"` but `intents["X"]` is missing. **Why wrong:** the validator rejects it and the classifier can never select it. **Fix:** declare `X` in the catalog (or fix the reference).
 
 ### "Cancel First, Ask Later"
-**Symptom:** a reschedule flow uses `manage_schedule_block_status` as its preparatory cancellation, often in parallel with `resolve_availability_query`. **Why wrong:** definitive status management is not the rescheduling contract, and the flow can lose the backend-owned target or cancel before a valid replacement path. **Fix:** use `cancel_for_rescheduling` → `resolve_availability_query` → `check_availability` → `schedule_block` in full mode. Use `manage_schedule_block_status` for definitive cancellation, including non-attendance; offer a new appointment only after the patient accepts it.
+**Symptom:** a reschedule flow uses `manage_schedule_block_status` as its preparatory cancellation, often in parallel with `resolve_availability_query`. **Why wrong:** definitive status management is not the rescheduling contract, and the flow can lose the backend-owned target or cancel before a valid replacement path. **Fix:** use `resolve_patient` → `resolve_reschedule_target` → `cancel_for_rescheduling` → `resolve_availability_query` → `check_availability` → `schedule_block` in full mode. Use `manage_schedule_block_status` for definitive cancellation, including non-attendance; offer a new appointment only after the patient accepts it.
 
 ### "Closing Template on a Search"
 **Symptom:** a flow whose terminal step is `check_availability` / `resolve_*` while declaring `responseTemplateKey` that points to a closing template like "He movido tu cita". **Why wrong:** the template is the flow's closing line, so the bot claims the change is done right after merely listing slots. **Fix:** end the flow with the acting tool (`schedule_block`) and reference the closing template there; or omit `responseTemplateKey` and let the model synthesise the search results.

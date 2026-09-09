@@ -48,13 +48,6 @@ const ALLOWED_CONDITION_KEYS = extractAllowedKeys(
   'properties.rules.items.properties.conditions.items.properties',
 );
 
-const STEP_CONDITION_OPERATORS = ['equals', 'in', 'notIn', 'exists'] as const;
-const TYPED_FACT_PRODUCERS: Record<string, string[]> = {
-  treatmentId: ['resolve_treatment'],
-  treatmentName: ['resolve_treatment'],
-  patientIsNew: ['resolve_patient'],
-};
-
 function rejectUnknownKeys(
   obj: Record<string, unknown> | null | undefined,
   allowedKeys: Set<string>,
@@ -69,118 +62,6 @@ function rejectUnknownKeys(
   }
 }
 
-function validateStepContract(
-  flowName: string,
-  flow: ToolFlow,
-  treatmentIds: Set<string>,
-  errors: string[],
-): void {
-  const customKeyIndexes = new Map<string, number[]>();
-  const producerIndexes = new Map<string, number[]>();
-
-  flow.steps.forEach((step, index) => {
-    if (Array.isArray(step.customState)) {
-      step.customState.forEach((field, fieldIndex) => {
-        const path = `Flow '${flowName}' step ${index + 1} customState[${fieldIndex}]`;
-        if (!field || typeof field !== 'object' || Array.isArray(field)) {
-          errors.push(`${path} must be an object`);
-          return;
-        }
-        const raw = field as unknown as Record<string, unknown>;
-        if (typeof raw.key !== 'string' || raw.key.trim().length === 0) {
-          errors.push(`${path}.key must be a non-empty string in snake_case`);
-        } else if (!/^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/.test(raw.key)) {
-          errors.push(`${path}.key must use snake_case`);
-        } else {
-          customKeyIndexes.set(raw.key, [...(customKeyIndexes.get(raw.key) ?? []), index]);
-        }
-        if (typeof raw.description !== 'string' || raw.description.trim().length === 0) {
-          errors.push(`${path}.description must be a non-empty string`);
-        }
-        if ('required' in raw) {
-          errors.push(`${path} must not contain 'required'; declared customState fields are required`);
-        }
-        if (raw.enum !== undefined) {
-          if (!Array.isArray(raw.enum) || raw.enum.length === 0 || raw.enum.some((value) => typeof value !== 'string')) {
-            errors.push(`${path}.enum must be a non-empty array of strings`);
-          }
-        }
-      });
-    }
-    for (const [fact, producers] of Object.entries(TYPED_FACT_PRODUCERS)) {
-      if (step.tools.some((tool) => producers.includes(tool))) {
-        producerIndexes.set(fact, [...(producerIndexes.get(fact) ?? []), index]);
-      }
-    }
-  });
-
-  flow.steps.forEach((step, index) => {
-    if (!Array.isArray(step.when)) return;
-    const availableCustomKeys = new Set(
-      [...customKeyIndexes.entries()]
-        .filter(([, indexes]) => indexes.some((declaredAt) => declaredAt < index))
-        .map(([key]) => key),
-    );
-    for (const [conditionIndex, condition] of step.when.entries()) {
-      const path = `Flow '${flowName}' step ${index + 1} when[${conditionIndex}]`;
-      if (!condition || typeof condition !== 'object' || Array.isArray(condition)) {
-        errors.push(`${path} must be an object`);
-        continue;
-      }
-      const raw = condition as unknown as Record<string, unknown>;
-      if (typeof raw.key !== 'string' || raw.key.trim().length === 0) {
-        errors.push(`${path}.key must be a non-empty string`);
-      }
-      const operators = STEP_CONDITION_OPERATORS.filter((operator) => raw[operator] !== undefined);
-      if (operators.length !== 1) {
-        errors.push(`${path} must use exactly one operator: ${STEP_CONDITION_OPERATORS.join(', ')}`);
-      }
-      if (operators.length === 1) {
-        const operator = operators[0];
-        const value = raw[operator];
-        const validValue = operator === 'exists'
-          ? typeof value === 'boolean'
-          : operator === 'equals'
-            ? typeof value === 'string'
-            : Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === 'string');
-        if (!validValue) errors.push(`${path}.${operator} has an invalid value`);
-      }
-
-      const key = typeof raw.key === 'string' ? raw.key : '';
-      const typedIndexes = producerIndexes.get(key) ?? [];
-      const producedEarlier = typedIndexes.some((producerAt) => producerAt < index);
-      const declaredEarlier = availableCustomKeys.has(key);
-      if (!producedEarlier && !declaredEarlier) {
-        const producedLater = typedIndexes.some((producerAt) => producerAt > index);
-        const declaredLater = (customKeyIndexes.get(key) ?? []).some((declaredAt) => declaredAt > index);
-        errors.push(
-          `${path} references '${key}', which must be produced by an earlier step in the same flow` +
-            (producedLater || declaredLater ? ' (future references are not allowed)' : ' and is unknown'),
-        );
-      }
-
-      if (key === 'treatmentId' && treatmentIds.size > 0) {
-        const values = raw.equals !== undefined
-          ? [raw.equals]
-          : Array.isArray(raw.in) ? raw.in
-            : Array.isArray(raw.notIn) ? raw.notIn
-              : [];
-        for (const value of values) {
-          if (typeof value === 'string' && !treatmentIds.has(value)) {
-            errors.push(`${path} references treatment ID '${value}' not present in serviceCatalog.treatments[].id`);
-          }
-        }
-      }
-    }
-  });
-
-  for (const [key, indexes] of customKeyIndexes) {
-    if (indexes.length > 1) {
-      errors.push(`Flow '${flowName}' customState key '${key}' is duplicated within the flow`);
-    }
-  }
-}
-
 export function validateFlowsAndTools(
   sl: Partial<StructuredLogic>,
   mode: StructuredLogicChatMode,
@@ -191,12 +72,6 @@ export function validateFlowsAndTools(
   const tasksOnlyToolNames = new Set(ALL_CHAT_TOOLS_TASKS_ONLY.map((t) => t.name));
   const schedulingTools = new Set(
     ALL_CHAT_TOOL_NAMES.filter((name) => !tasksOnlyToolNames.has(name)),
-  );
-  const catalogTreatments = sl.serviceCatalog?.treatments;
-  const treatmentIds = new Set(
-    Array.isArray(catalogTreatments)
-      ? catalogTreatments.flatMap((treatment) => typeof treatment.id === 'string' ? [treatment.id] : [])
-      : [],
   );
 
   // 6a. Flow steps must have unique, sequential step numbers
@@ -411,7 +286,6 @@ export function validateFlowsAndTools(
         }
       }
     });
-    validateStepContract(flowName, flow, treatmentIds, errors);
 
     // 4.3 Validate that flows without tools have response mechanism
     const hasTools = flow.steps.some((step) => step.tools.length > 0);
@@ -498,11 +372,61 @@ export function validateFlowsAndTools(
       isReschedulingIntent(flow.intent),
     );
     for (const [flowName, flow] of rescheduleFlows) {
+      const targetIndex = flow.steps.findIndex((step) =>
+        (step.tools || []).includes('resolve_reschedule_target'),
+      );
+      if (
+        flow.intent === 'existing_appointment_rescheduling' ||
+        flow.intent === 'existing_appointment_reschedule_inquiry'
+      ) {
+        const patientIndex = flow.steps.findIndex((step) =>
+          (step.tools || []).includes('resolve_patient'),
+        );
+        const targetStep = flow.steps.find((step) =>
+          (step.tools || []).includes('resolve_reschedule_target'),
+        );
+
+        if (!(flow.allowedTools || []).includes('resolve_patient')) {
+          errors.push(
+            `Flow "${flowName}" (intent: ${flow.intent}) in full mode must include "resolve_patient" in allowedTools.`,
+          );
+        }
+        if (patientIndex < 0 || targetIndex < 0 || patientIndex >= targetIndex) {
+          errors.push(
+            `Flow "${flowName}" (intent: ${flow.intent}) in full mode must declare "resolve_patient" before "resolve_reschedule_target".`,
+          );
+        }
+        if (
+          targetStep &&
+          (!Array.isArray(targetStep.required) || !targetStep.required.includes('hasPatientTarget'))
+        ) {
+          errors.push(
+            `Flow "${flowName}" (intent: ${flow.intent}) must require "hasPatientTarget" on the "resolve_reschedule_target" step.`,
+          );
+        }
+      }
+
       const cancelIndex = flow.steps.findIndex((step) =>
         (step.tools || []).includes('cancel_for_rescheduling'),
       );
       const usesSchedule = flowUsesTool(flow, 'schedule_block');
-      if (!usesSchedule) continue;
+      const availabilityIndex = flow.steps.findIndex((step) =>
+        (step.tools || []).includes('check_availability'),
+      );
+      const resolveIndex = flow.steps.findIndex((step) =>
+        (step.tools || []).includes('resolve_availability_query'),
+      );
+      if (!usesSchedule) {
+        if (availabilityIndex >= 0 &&
+            (targetIndex < 0 || resolveIndex < 0 ||
+              !(targetIndex < resolveIndex && resolveIndex < availabilityIndex))) {
+          errors.push(
+            `Flow "${flowName}" (intent: ${flow.intent}) must order patientTarget -> ` +
+              `resolve_reschedule_target -> resolve_availability_query -> check_availability.`,
+          );
+        }
+        continue;
+      }
 
       if (flowUsesTool(flow, 'manage_schedule_block_status')) {
         errors.push(
@@ -519,51 +443,22 @@ export function validateFlowsAndTools(
         );
         continue;
       }
+      if (targetIndex < 0 || targetIndex > cancelIndex) {
+        errors.push(
+          `Flow "${flowName}" (intent: ${flow.intent}) in full mode must resolve "resolve_reschedule_target" before "cancel_for_rescheduling".`,
+        );
+      }
 
-      const availabilityIndex = flow.steps.findIndex((step) =>
-        (step.tools || []).includes('check_availability'),
-      );
       const scheduleIndex = flow.steps.findIndex((step) =>
         (step.tools || []).includes('schedule_block'),
       );
-      const resolveIndex = flow.steps.findIndex((step) =>
-        (step.tools || []).includes('resolve_availability_query'),
-      );
-
-      // Concrete date/time exception: when the flow requires the turn-start
-      // capability "hasConcreteDateTime", the patient already gave a concrete
-      // date AND time, so resolve_availability_query MAY be omitted. When it is
-      // NOT declared, the resolve step stays mandatory so the bot asks for the
-      // missing date or time — check_availability never runs without both.
-      const requiredCapabilities = flow.selection?.requiredCapabilities;
-      const declaresConcreteDateTime =
-        Array.isArray(requiredCapabilities) &&
-        requiredCapabilities.includes('hasConcreteDateTime');
-
-      if (declaresConcreteDateTime) {
-        const orderIsValid =
-          scheduleIndex >= 0 &&
-          availabilityIndex >= 0 &&
-          cancelIndex < availabilityIndex &&
-          availabilityIndex < scheduleIndex &&
-          (resolveIndex < 0 ||
-            (cancelIndex < resolveIndex && resolveIndex < availabilityIndex));
-        if (!orderIsValid) {
-          errors.push(
-            `Flow "${flowName}" (intent: ${flow.intent}) declares "hasConcreteDateTime", so "resolve_availability_query" may be omitted, ` +
-              `but it must still order cancel_for_rescheduling -> check_availability -> schedule_block in numbered steps ` +
-              `(when "resolve_availability_query" is present it must stay between cancel_for_rescheduling and check_availability). ` +
-              `"check_availability" never runs without a concrete date and time.`,
-          );
-        }
-        continue;
-      }
 
       if (
         scheduleIndex < 0 ||
         availabilityIndex < 0 ||
         resolveIndex < 0 ||
         !(
+          targetIndex < cancelIndex &&
           cancelIndex < resolveIndex &&
           resolveIndex < availabilityIndex &&
           availabilityIndex < scheduleIndex
@@ -571,10 +466,9 @@ export function validateFlowsAndTools(
       ) {
         errors.push(
           `Flow "${flowName}" (intent: ${flow.intent}) declares "cancel_for_rescheduling" but must order ` +
-            `cancel_for_rescheduling -> resolve_availability_query -> check_availability -> schedule_block in ` +
-            `numbered steps. The backend target is captured before the new date and booking reuses it. ` +
-            `If the patient always gives a concrete date AND time at turn start, declare "hasConcreteDateTime" ` +
-            `in selection.requiredCapabilities to make "resolve_availability_query" optional.`,
+            `patientTarget -> resolve_reschedule_target -> cancel_for_rescheduling -> resolve_availability_query -> ` +
+            `check_availability -> schedule_block in numbered steps. The appointment is released preparatorily ` +
+            `before the new date is asked or consulted, and booking reuses the persisted target.`,
         );
       }
     }

@@ -200,23 +200,7 @@ export type ToolStep = {
   tools: string[];
   parallel: boolean;
   required?: string[];
-  customState?: CustomStateField[];
-  when?: StepCondition[];
   note?: string;
-};
-
-export type CustomStateField = {
-  key: string;
-  description: string;
-  enum?: string[];
-};
-
-export type StepCondition = {
-  key: string;
-  equals?: string;
-  in?: string[];
-  notIn?: string[];
-  exists?: boolean;
 };
 
 export type BusinessRuleCondition = {
@@ -361,7 +345,6 @@ export type IntentCatalog = {
 };
 
 export type ChatService = {
-  id?: string;
   /** Name of the treatment or pack (e.g., "Limpieza dental", "Bono 5 sesiones") */
   name: string;
   /** Brief description for the patient */
@@ -387,9 +370,9 @@ export type ServiceCatalog = {
 export type StructuredLogic = {
   /** Schema version */
   version: string;
-  /** Maximum number of availability slots shown to the patient. */
+  /** Maximum number of availability slots shown to the patient; the server enforces the effective limit. */
   maxVisibleSlots?: number;
-  /** Optional chat scheduling start-minute policies, applied in a later runtime phase. */
+  /** Optional chat scheduling start-minute policies. A specific real treatment ID takes precedence over null (clinic-wide). */
   globalSchedulingPolicies?: GlobalSchedulingPolicy[];
   /** What capabilities this clinic has */
   capabilities: ClinicCapabilities;
@@ -420,17 +403,17 @@ export type StructuredLogic = {
   treatmentPolicyHints?: TreatmentPolicyHint[];
   /**
    * Indicaciones de la clínica sobre CÓMO IDENTIFICAR el tratamiento correcto
-   * para lo que pide el paciente. Prosa libre que se inyecta en el prompt de
-   * `resolve_treatment`, junto al catálogo real de la sede.
+   * para lo que pide el paciente. Prosa libre que se inyecta en el prompt del
+   * orquestador, junto al catálogo real de la sede; no se inyecta en la llamada
+   * interna de `resolve_treatment`.
    *
    * No confundir con `treatmentPolicyHints`, que trata de las políticas de
    * scheduling (FILTRAN qué se puede agendar y cuándo). Esto IDENTIFICA cuál es
    * el tratamiento adecuado: p. ej. "si el paciente es nuevo y pide un
    * tratamiento concreto, lo recomendable es una cita de valoración".
    *
-   * Se escriben los NOMBRES tal cual están en el catálogo, nunca IDs: el modelo
-   * ve la lista de tratamientos en la misma llamada y el `treatmentId` sale de
-   * ahí, así que un nombre inventado simplemente no casa con nada.
+   * Se escriben los NOMBRES tal cual están en el catálogo, nunca IDs. El servidor
+   * deriva los claims operativos a partir de ejecuciones reales de tools.
    */
   treatmentSelectionGuidance?: string;
   /**

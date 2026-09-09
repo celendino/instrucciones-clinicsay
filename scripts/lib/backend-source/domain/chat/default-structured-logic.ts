@@ -352,36 +352,54 @@ function buildDefaultFlows(mode: 'full' | 'tasks-only'): Record<string, ToolFlow
           'Paciente quiere cambiar la fecha u hora de una cita YA AGENDADA. ' +
           'Incluye: (a) mover a otro dia, (b) adelantar/atrasar el MISMO dia, ' +
           '(c) corregir titular manteniendo mismo tratamiento, (d) restablecer cita tras cancelar en este turno.',
-        // El target de reagendamiento se captura antes de pedir la nueva fecha.
-        // Sus IDs de care plan/sesiones los devuelve scheduling, nunca el LLM.
+        // El target de reagendamiento se captura y se libera ANTES de pedir la
+        // nueva fecha: la cita se cancela preparatoriamente y solo despues se
+        // consulta la agenda. Sus IDs de care plan/sesiones los devuelve
+        // scheduling, nunca el LLM.
         steps: [
           {
             step: 1,
-            tools: ['cancel_for_rescheduling'],
+            tools: ['resolve_patient'],
             parallel: false,
             note:
-              'Cancelar y liberar preparatoriamente la cita elegible. El backend conserva el target y sus sesiones; ' +
-              'no inventar carePlanId ni plannedSessionIds.',
+              'Resolver el paciente cuando haya varios candidatos o el interlocutor indique a un tercero. Si hay un unico paciente objetivo DEFAULT, puede continuar sin llamar esta tool.',
           },
           {
             step: 2,
-            tools: ['resolve_availability_query'],
+            tools: ['resolve_reschedule_target'],
             parallel: false,
-            required: ['hasCancelledRescheduleTarget'],
-            note: 'Resolver las nuevas fechas que pide el paciente despues de capturar el target.',
+            required: ['hasPatientTarget'],
+            note: 'Resolver y persistir la cita exacta del paciente antes de cancelarla.',
           },
           {
             step: 3,
-            tools: ['check_availability'],
+            tools: ['cancel_for_rescheduling'],
             parallel: false,
-            required: ['hasCancelledRescheduleTarget', 'hasResolvedAvailabilityQuery'],
-            note: 'Buscar nuevos horarios (condicion: dates_resolved). Mantener mismo professionalId de la cita original como preferencia. Para mismo dia: filtrar slots del dia actual.',
+            required: ['hasResolvedRescheduleTarget'],
+            note:
+              'Cancelar y liberar preparatoriamente la cita identificada ANTES de pedir o consultar la nueva fecha. ' +
+              'El backend conserva el target y sus sesiones; no inventar carePlanId ni plannedSessionIds.',
           },
           {
             step: 4,
+            tools: ['resolve_availability_query'],
+            parallel: false,
+            required: ['hasCancelledRescheduleTarget'],
+            note:
+              'Resolver las nuevas fechas que pide el paciente despues de liberar la cita.',
+          },
+          {
+            step: 5,
+            tools: ['check_availability'],
+            parallel: false,
+            required: ['hasCancelledRescheduleTarget', 'hasResolvedAvailabilityQuery'],
+            note: 'Buscar nuevos horarios usando las fechas resueltas y el tratamiento de la cita liberada.',
+          },
+          {
+            step: 6,
             tools: ['schedule_block'],
             parallel: false,
-            required: ['hasCancelledRescheduleTarget', 'hasShownSlots'],
+            required: ['hasResolvedPatient', 'hasCancelledRescheduleTarget', 'hasShownSlots'],
             note:
               'Agendar la NUEVA cita solo con disponibilidad comprobada en el turno actual (condicion: slot_selected). ' +
               'Si el horario elegido ya no esta libre, informar que no esta disponible y ofrecer alternativas reales. ' +
@@ -389,6 +407,8 @@ function buildDefaultFlows(mode: 'full' | 'tasks-only'): Record<string, ToolFlow
           },
         ],
         allowedTools: [
+          'resolve_patient',
+          'resolve_reschedule_target',
           'cancel_for_rescheduling',
           'resolve_availability_query',
           'check_availability',
@@ -438,14 +458,41 @@ function buildDefaultFlows(mode: 'full' | 'tasks-only'): Record<string, ToolFlow
         steps: [
           {
             step: 1,
-            tools: ['resolve_availability_query', 'check_availability'],
+            tools: ['resolve_patient'],
             parallel: false,
-            required: [],
             note:
-              'SOLO si el paciente ya ha dado un dia o una franja. Consultar e informar ' +
-              'que opciones hay; NUNCA afirmar que la cita se ha movido ni prometer una ' +
-              'busqueda futura: se consulta y se dice lo que hay.',
+              'Resolver el paciente cuando haya varios candidatos o el interlocutor indique a un tercero. Si hay un unico paciente objetivo DEFAULT, puede continuar sin llamar esta tool.',
           },
+          {
+            step: 2,
+            tools: ['resolve_reschedule_target'],
+            parallel: false,
+            required: ['hasPatientTarget'],
+            note: 'Resolver el foco exacto antes de consultar o prometer cualquier horario.',
+          },
+          {
+            step: 3,
+            tools: ['resolve_availability_query'],
+            parallel: false,
+            required: ['hasResolvedRescheduleTarget'],
+            note:
+              'Cuando el paciente ya ha dado un dia o una franja, consultar disponibilidad es ' +
+              'obligatorio antes de responder e informar que opciones hay; NUNCA afirmar que ' +
+              'la cita se ha movido ni prometer una busqueda futura: se consulta y se dice lo que hay.',
+          },
+          {
+            step: 4,
+            tools: ['check_availability'],
+            parallel: false,
+            required: ['hasResolvedRescheduleTarget', 'hasResolvedAvailabilityQuery'],
+            note: 'Buscar los horarios con las fechas resueltas del paciente.',
+          },
+        ],
+        allowedTools: [
+          'resolve_patient',
+          'resolve_reschedule_target',
+          'resolve_availability_query',
+          'check_availability',
         ],
         responseTemplateKey: 'reschedule_inquiry_full',
       },

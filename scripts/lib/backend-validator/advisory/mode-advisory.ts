@@ -8,7 +8,8 @@
  * They are canonical notes about what each mode typically enables.
  */
 
-import { DEFAULT_STRUCTURED_LOGIC, type StructuredLogic, type StructuredLogicChatMode } from '../structured-logic';
+import type { StructuredLogic, StructuredLogicChatMode } from '../structured-logic';
+import { DEFAULT_MAX_VISIBLE_SLOTS } from '../availability/chat-bot-defaults';
 import type { LogicGap } from '../validator';
 
 export function detectModeAdvisoryGaps(
@@ -174,7 +175,7 @@ export function detectModeAdvisoryGaps(
   // default (9 / []): el default no es una decisión consciente de la sede.
   if (mode === 'tasks-only') {
     const hasCustomMaxVisibleSlots =
-      logic.maxVisibleSlots !== undefined && logic.maxVisibleSlots !== DEFAULT_STRUCTURED_LOGIC.maxVisibleSlots;
+      logic.maxVisibleSlots !== undefined && logic.maxVisibleSlots !== DEFAULT_MAX_VISIBLE_SLOTS;
     const hasSchedulingPolicies = (logic.globalSchedulingPolicies ?? []).length > 0;
     if (hasCustomMaxVisibleSlots || hasSchedulingPolicies) {
       gaps.push({

@@ -15,6 +15,7 @@ const FULL_MODE_TOOLS = [
   'resolve_treatment',
   'resolve_professional',
   'resolve_availability_query',
+  'resolve_reschedule_target',
   'check_availability',
   'schedule_block',
   'cancel_for_rescheduling',
@@ -28,6 +29,7 @@ const FULL_MODE_TOOLS = [
 
 /** All tool names available in TASKS-ONLY mode */
 const TASKS_ONLY_TOOLS = [
+  'resolve_patient',
   'manage_schedule_block_status',
   'manage_all_schedule_blocks_for_date',
   'create_task',

@@ -41,14 +41,6 @@ export type WireFlow = {
     tools: string[];
     parallel: boolean;
     required?: string[] | null;
-    customState: Array<{ key: string; description: string; enum?: string[] | null }> | null;
-    when: Array<{
-      key: string;
-      equals?: string | null;
-      in?: string[] | null;
-      notIn?: string[] | null;
-      exists?: boolean | null;
-    }> | null;
     note?: string | null;
   }>;
   responseTemplateKey?: string | null;
@@ -86,7 +78,7 @@ export type WireStructuredLogic = {
   styleRules?: StructuredLogic['styleRules'];
   responseTemplates?: WireResponseTemplate[];
   faq?: StructuredLogic['faq'];
-  serviceCatalog: { treatments: Array<{ id?: string | null; name: string; description?: string | null; priceDescription?: string | null; requiresConsultation?: boolean | null; category?: string | null }>; packs?: Array<{ id?: string | null; name: string; description?: string | null; priceDescription?: string | null; requiresConsultation?: boolean | null; category?: string | null }> | null };
+  serviceCatalog: { treatments: Array<{ name: string; description?: string | null; priceDescription?: string | null; requiresConsultation?: boolean | null; category?: string | null }>; packs?: Array<{ name: string; description?: string | null; priceDescription?: string | null; requiresConsultation?: boolean | null; category?: string | null }> | null };
   protocols?: WireProtocol[];
   errorCategories?: StructuredLogic['errorCategories'];
   treatmentPolicyHints?: StructuredLogic['treatmentPolicyHints'];
@@ -124,29 +116,7 @@ export function toWireFormat(logic: StructuredLogic): WireStructuredLogic {
                   excludedCapabilities: flow.selection.excludedCapabilities ?? null,
                 }
               : null,
-            steps: flow.steps.map((step) => ({
-              step: step.step,
-              tools: step.tools,
-              parallel: step.parallel,
-              required: step.required ?? null,
-              customState: step.customState
-                ? step.customState.map((field) => ({
-                    key: field.key,
-                    description: field.description,
-                    enum: field.enum ?? null,
-                  }))
-                : null,
-              when: step.when
-                ? step.when.map((condition) => ({
-                    key: condition.key,
-                    equals: condition.equals ?? null,
-                    in: condition.in ?? null,
-                    notIn: condition.notIn ?? null,
-                    exists: condition.exists ?? null,
-                  }))
-                : null,
-              note: step.note ?? null,
-            })),
+            steps: flow.steps,
             responseTemplateKey: flow.responseTemplateKey,
             allowedTools: flow.allowedTools,
             allowsSilence: flow.allowsSilence,
@@ -166,7 +136,6 @@ export function toWireFormat(logic: StructuredLogic): WireStructuredLogic {
     faq: logic.faq,
     serviceCatalog: {
       treatments: logic.serviceCatalog?.treatments.map((t) => ({
-        id: t.id ?? null,
         name: t.name,
         description: t.description ?? null,
         priceDescription: t.priceDescription ?? null,
@@ -175,7 +144,6 @@ export function toWireFormat(logic: StructuredLogic): WireStructuredLogic {
       })) ?? [],
       packs: logic.serviceCatalog?.packs
         ? logic.serviceCatalog.packs.map((p) => ({
-            id: p.id ?? null,
             name: p.name,
             description: p.description ?? null,
             priceDescription: p.priceDescription ?? null,
@@ -225,22 +193,6 @@ export function fromWireFormat(wire: WireStructuredLogic): StructuredLogic {
           parallel: s.parallel,
         };
         if (s.required != null) step.required = s.required;
-        if (s.customState != null) {
-          step.customState = s.customState.map((field) => ({
-            key: field.key,
-            description: field.description,
-            ...(field.enum != null ? { enum: field.enum } : {}),
-          }));
-        }
-        if (s.when != null) {
-          step.when = s.when.map((condition) => ({
-            key: condition.key,
-            ...(condition.equals != null ? { equals: condition.equals } : {}),
-            ...(condition.in != null ? { in: condition.in } : {}),
-            ...(condition.notIn != null ? { notIn: condition.notIn } : {}),
-            ...(condition.exists != null ? { exists: condition.exists } : {}),
-          }));
-        }
         if (s.note != null) step.note = s.note;
         return step;
       }),
@@ -288,7 +240,6 @@ export function fromWireFormat(wire: WireStructuredLogic): StructuredLogic {
   const serviceCatalog: import('../chat/structured-logic').ServiceCatalog = {
     treatments: wire.serviceCatalog.treatments.map((t) => {
       const treatment: import('../chat/structured-logic').ChatService = { name: t.name };
-      if (t.id != null) treatment.id = t.id;
       if (t.description != null) treatment.description = t.description;
       if (t.priceDescription != null) treatment.priceDescription = t.priceDescription;
       if (t.requiresConsultation != null) treatment.requiresConsultation = t.requiresConsultation;
@@ -299,7 +250,6 @@ export function fromWireFormat(wire: WireStructuredLogic): StructuredLogic {
   if (wire.serviceCatalog.packs != null) {
     serviceCatalog.packs = wire.serviceCatalog.packs.map((p) => {
       const pack: import('../chat/structured-logic').ChatService = { name: p.name };
-      if (p.id != null) pack.id = p.id;
       if (p.description != null) pack.description = p.description;
       if (p.priceDescription != null) pack.priceDescription = p.priceDescription;
       if (p.requiresConsultation != null) pack.requiresConsultation = p.requiresConsultation;

@@ -157,6 +157,7 @@
                         "type": "string",
                         "enum": [
                           "resolve_availability_query",
+                          "resolve_reschedule_target",
                           "check_availability",
                           "schedule_block",
                           "cancel_for_rescheduling",
@@ -212,6 +213,7 @@
                   "type": "string",
                   "enum": [
                     "resolve_availability_query",
+                    "resolve_reschedule_target",
                     "check_availability",
                     "schedule_block",
                     "cancel_for_rescheduling",

@@ -9,10 +9,12 @@
     "push:sedes": "tsx scripts/push-sedes-to-db.ts",
     "test:push-sedes": "node --test scripts/tests/push-sedes.test.cjs",
     "test:anti-circular": "node --test scripts/tests/anti-circular.test.cjs",
-    "validate:full": "tsx scripts/lib/backend-validator/run-validation.ts"
+    "validate:full": "tsx scripts/lib/backend-validator/run-validation.ts",
+    "server": "node server.cjs",
+    "server:port": "node server.cjs"
   },
   "dependencies": {
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.6.1",
     "pg": "^8.13.3"
   },
   "devDependencies": {

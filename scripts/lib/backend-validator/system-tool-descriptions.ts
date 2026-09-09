@@ -89,7 +89,7 @@ export const FULL_MODE_ENHANCEMENTS: Record<string, string> = {
     'USAR ANTES de schedule_block o create_task de agendamiento si no hay paciente resuelto. ' +
     'REGLA DE ORO: Solo puedes pasar firstName, lastName o phone si el INTERLOCUTOR los dijo EXPLICITAMENTE en su mensaje actual o en mensajes anteriores de ESTA conversacion. ' +
     'NUNCA uses CALLER_PHONE, ASSOCIATED_PATIENTS ni datos del contacto de Kommo como datos confirmados sin autorizacion del interlocutor. ' +
-    'El telefono debe ser proporcionado explicitamente por el interlocutor; useInterlocutorPhone se conserva solo por compatibilidad y no sustituye phone. ' +
+    'El telefono debe ser proporcionado explicitamente por el interlocutor; solo usa el telefono del contacto si el interlocutor indico explicitamente que es el numero desde el que escribe y useInterlocutorPhone es true. ' +
     'Si falta alguno de estos datos, el sistema retorna status "needs_info" y pide los datos faltantes. ' +
     'El sistema busca por telefono + nombre + apellido; si no encuentra ningun paciente, lo crea automaticamente con los datos proporcionados. ' +
     'El campo isForInterlocutor solo sirve para auditoria/logging; NO altera la busqueda ni la creacion.',

@@ -138,6 +138,7 @@ declare -a FILE_MAP=(
   "src/domain/chatbot-instruction-builder/validators/flow-safety.ts|validators/flow-safety.ts"
   "src/domain/chatbot-instruction-builder/validators/flow-validation.ts|validators/flow-validation.ts"
   "src/domain/chatbot-instruction-builder/validators/structural.ts|validators/structural.ts"
+  "src/domain/chat/availability/chat-bot-defaults.ts|availability/chat-bot-defaults.ts"
   "src/domain/chat/canonical-intents.ts|canonical-intents.ts"
   "src/domain/chat/structured-logic.ts|structured-logic.ts"
   "src/domain/chat/structured-logic-minimum.ts|structured-logic-minimum.ts"
@@ -151,6 +152,7 @@ declare -a FILE_MAP=(
   "src/domain/chat/tool-definitions-tasks-only.ts|tool-definitions-tasks-only.ts"
   "src/domain/chat/tool-description-generator.ts|tool-description-generator.ts"
   "src/ports/secondary/chat/openai-conversation.port.ts|ports/secondary/chat/openai-conversation.port.ts"
+  "src/domain/chat/tool-names.ts|-"
   "src/application/chat/use-cases/RunToolCycle/tool-call-policy.ts|-"
 )
 

@@ -71,7 +71,7 @@ Las rules DEBEN usar los intents canónicos exactos. Si una rule referencia un i
 
 **Contrato de intención para cancelación y reagendamiento:**
 - Una consulta (`existing_appointment_reschedule_inquiry`) no confirma cambios ni cancela, pero en **full mode DEBE poder consultar disponibilidad real** (`resolve_availability_query` + `check_availability`) para mostrar opciones al paciente. Sin estas tools el flujo no tiene herramientas y el bot entra en bucle prometiendo buscar.
-- Una aceptación explícita usa `existing_appointment_rescheduling`; en full el flow debe respetar `cancel_for_rescheduling` -> `resolve_availability_query` -> `check_availability` -> `schedule_block` (con la excepción documentada de `hasConcreteDateTime`).
+- Una aceptación explícita usa `existing_appointment_rescheduling`; en full el flow debe respetar `resolve_patient` -> `resolve_reschedule_target` -> `cancel_for_rescheduling` -> `resolve_availability_query` -> `check_availability` -> `schedule_block` (con la excepción documentada de `hasConcreteDateTime`).
 - La no asistencia es `existing_appointment_cancellation` con `manage_schedule_block_status`. Una nueva cita posterior es `new_appointment_scheduling` y espera aceptación después de cancelar.
 - Los estados internos verbose no son intents. Los flows pueden incluir `create_task` o pasos custom si el asesor lo decide y no rompe las invariantes del backend. Las respuestas a recordatorios de confirmación y cancelación no cambian.
 

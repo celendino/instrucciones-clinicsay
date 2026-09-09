@@ -23,9 +23,11 @@ Cada intent que requiere acción del bot DEBE tener al menos un flow:
 - `resolve_patient`: Identificar/crear paciente antes de agendar
 - `resolve_treatment`: Identificar tratamiento deseado
 - `resolve_professional`: Identificar profesional por nombre/especialidad
+- `resolve_reschedule_target`: Identificar y persistir LA cita concreta que el paciente quiere mover, con todas las pistas ya dadas (día, hora, tratamiento)
 - `resolve_availability_query`: Convertir frase natural de fecha a fechas concretas
 - `check_availability`: Consultar disponibilidad de horarios
 - `schedule_block`: Crear cita real (requiere resolve_patient y check_availability previos)
+- `cancel_for_rescheduling`: Liberar preparatoriamente la cita YA identificada, solo en flujos de reagendamiento
 - `manage_schedule_block_status`: Confirmar/cancelar/marcar en camino una cita existente
 - `manage_all_schedule_blocks_for_date`: Gestionar TODAS las citas de un día
 - `create_task`: Crear tarea administrativa
@@ -40,13 +42,13 @@ Cada intent que requiere acción del bot DEBE tener al menos un flow:
 - `lookup_patient` (solo lectura)
 - `query_protocol`
 - `query_knowledge_base` (fallback semántico para preguntas informativas)
-- **PROHIBIDAS:** `check_availability`, `schedule_block`, `resolve_availability_query`, `cancel_for_rescheduling`, `resolve_patient`, `resolve_professional`, `resolve_treatment`
+- **PROHIBIDAS:** `check_availability`, `schedule_block`, `resolve_availability_query`, `cancel_for_rescheduling`, `resolve_reschedule_target`, `resolve_professional`, `resolve_treatment`
 
 ### 3. Flujos de agendamiento por modo
 
 **Contrato semántico de citas existentes (AMBOS MODOS):**
-- `existing_appointment_reschedule_inquiry` pregunta si se puede cambiar la cita; no confirma, cancela ni reserva. En **full mode DEBE consultar disponibilidad real** (`resolve_availability_query` + `check_availability`) para mostrar opciones concretas; en tasks-only no usa scheduling tools.
-- `existing_appointment_rescheduling` solo se activa ante una aceptación explícita y, en full, usa `cancel_for_rescheduling` -> `resolve_availability_query` -> `check_availability` -> `schedule_block`. El target, su metadata y el modo efectivo de reserva son backend-owned: no los expongas ni los pidas al asesor o al LLM.
+- `existing_appointment_reschedule_inquiry` pregunta si se puede cambiar la cita; no confirma, cancela ni reserva. En **full mode DEBE declarar** `resolve_patient` -> `resolve_reschedule_target` -> `resolve_availability_query` -> `check_availability` en ese orden, para mostrar opciones concretas de LA cita que el paciente tiene en mente; en tasks-only no usa scheduling tools.
+- `existing_appointment_rescheduling` solo se activa ante una aceptación explícita y, en full, usa `resolve_patient` -> `resolve_reschedule_target` -> `cancel_for_rescheduling` -> `resolve_availability_query` -> `check_availability` -> `schedule_block`. El target, su metadata y el modo efectivo de reserva son backend-owned: no los expongas ni los pidas al asesor o al LLM.
 - `hasCancelledRescheduleTarget` es la alternativa de selección para la continuidad backend-owned; no requiere ni genera campos temporales como `expiresAt`.
 - La no asistencia es cancelación definitiva: usa `manage_schedule_block_status`, ofrece una nueva cita y espera aceptación antes de continuar `new_appointment_scheduling`.
 - Usa estados internos descriptivos para continuaciones, nunca ids de intent nuevos. Los recordatorios siguen usando sus flows actuales de confirmación y cancelación, sin cambios.
@@ -66,17 +68,24 @@ Nueva cita (new_appointment_scheduling):
   El asesor puede resolver al paciente antes de check_availability o después de mostrar disponibilidad, siempre antes de reservar.
   ⚠️ INVARIANTE ANTI-CIRCULAR: 'required' solo consume capabilities establecidas por steps ANTERIORES; un step NUNCA requiere lo que establece su propia tool (el validador lo rechaza como error bloqueante).
 
+Consultar un cambio (existing_appointment_reschedule_inquiry):
+  resolve_patient -> resolve_reschedule_target -> resolve_availability_query -> check_availability.
+  Informativa: los huecos NO autorizan a cancelar, mover ni crear la cita.
+
 Reprogramar cita existente (existing_appointment_rescheduling, selection.requiredCapabilities: ["hasActiveAppointment"] o alternativeRequiredCapabilities: ["hasCancelledRescheduleTarget"]):
-  Step 1: cancel_for_rescheduling (cancelar y liberar preparatoriamente la cita elegible; el backend conserva el target y establece la capability de continuación)
-  Step 2: resolve_availability_query (resolver nuevas fechas)
-  Step 3: check_availability (buscar nuevos horarios, usando el profesional original como preferencia cuando sea posible)
-  Step 4: schedule_block (solo después de disponibilidad comprobada en el turno actual; `hasShownSlots` no puede provenir de slots heredados. El backend reconcilia sesiones ACTIVE + PENDING del tratamiento capturado: reutiliza CARE_PLAN si quedan sesiones y puede autorizar STANDALONE si no queda ninguna; el LLM no elige el modo)
+  Step 1: resolve_patient (identidad primero; puede no llamarse con un único paciente objetivo DEFAULT, pero debe estar declarado)
+  Step 2: resolve_reschedule_target, required ["hasPatientTarget"] (fijar y persistir LA cita exacta antes de tocarla)
+  Step 3: cancel_for_rescheduling, required ["hasResolvedRescheduleTarget"] (liberar preparatoriamente la cita YA identificada; el backend conserva el target y establece la capability de continuación)
+  Step 4: resolve_availability_query (resolver nuevas fechas)
+  Step 5: check_availability (buscar nuevos horarios, usando el profesional original como preferencia cuando sea posible)
+  Step 6: schedule_block (solo después de disponibilidad comprobada en el turno actual; `hasShownSlots` no puede provenir de slots heredados. El backend reconcilia sesiones ACTIVE + PENDING del tratamiento capturado: reutiliza CARE_PLAN si quedan sesiones y puede autorizar STANDALONE si no queda ninguna; el LLM no elige el modo)
 
   Excepción para fecha y hora concretas ya presentes al inicio del turno:
   selection.requiredCapabilities incluye "hasConcreteDateTime".
   En ese caso puede omitirse resolve_availability_query y el orden es:
-  cancel_for_rescheduling -> check_availability -> schedule_block.
-  No omitirlo si falta la fecha o la hora; check_availability nunca debe ejecutarse sin ambas. Si el horario elegido ya no esta libre, informar la perdida de disponibilidad y ofrecer alternativas reales, sin tratarla como expiracion del target.
+  resolve_patient -> resolve_reschedule_target -> cancel_for_rescheduling -> check_availability -> schedule_block.
+  La identidad y el target NUNCA se omiten: son los que deciden qué cita se libera.
+  No omitir resolve_availability_query si falta la fecha o la hora; check_availability nunca debe ejecutarse sin ambas. Si el horario elegido ya no esta libre, informar la perdida de disponibilidad y ofrecer alternativas reales, sin tratarla como expiracion del target.
 
 **CONTINUIDAD TEMPORAL:** `continuous`, `short_break`, `same_period` y `recent` pueden continuar un target dentro del contexto confiable de la conversacion. `distant` inicia una conversacion nueva y descarta target, intencion operativa, slots y disponibilidad previa.
 ```
@@ -93,12 +102,8 @@ Cualquier solicitud de agendamiento:
 - `step`: número secuencial (1, 2, 3...)
 - `tools`: array de strings (tool names)
 - `parallel`: `true` solo si las tools no dependen entre sí
-- `required`: array de **capability flags** que deben estar presentes para ejecutar este step. NUNCA tool names. Flags válidas: `hasResolvedTreatment`, `hasResolvedPatient`, `hasResolvedProfessional`, `hasShownSlots`, `hasSelectedSlot`, `hasCreatedAppointment`, `hasCreatedTask`, `hasResolvedAvailabilityQuery`, `hasCancelledRescheduleTarget`, `hasConcreteDateTime`. Ejemplo: `["hasResolvedPatient"]` en el step final de booking. Si no hay requirements, usar `[]`. `hasCancelledRescheduleTarget` solo indica que el backend capturó un target elegible; no contiene ni solicita metadata interna. `hasConcreteDateTime` solo significa que el paciente ya dio fecha Y hora concretas. **INVARIANTE TÉCNICO (bloqueante):** la flag solo puede CONSUMIRSE; debe haber sido establecida por tools de steps ANTERIORES (`cancel_for_rescheduling`→`hasCancelledRescheduleTarget`, `resolve_treatment`→`hasResolvedTreatment`, `resolve_patient`/`lookup_patient`→`hasResolvedPatient`, `resolve_professional`→`hasResolvedProfessional`, `check_availability`→`hasShownSlots`, `schedule_block`→`hasCreatedAppointment`, `create_task`→`hasCreatedTask`, `resolve_availability_query`→`hasResolvedAvailabilityQuery`). Un step que requiere lo que su propia tool establece es una dependencia circular y bloquea el flow en runtime.
+- `required`: array de **capability flags** que deben estar presentes para ejecutar este step. NUNCA tool names. Flags válidas: `hasResolvedTreatment`, `hasResolvedPatient`, `hasPatientTarget`, `hasResolvedProfessional`, `hasShownSlots`, `hasSelectedSlot`, `hasCreatedAppointment`, `hasCreatedTask`, `hasResolvedAvailabilityQuery`, `hasResolvedRescheduleTarget`, `hasCancelledRescheduleTarget`, `hasConcreteDateTime`. Ejemplo: `["hasResolvedPatient"]` en el step final de booking. Si no hay requirements, usar `[]`. `hasCancelledRescheduleTarget` solo indica que el backend capturó un target elegible; no contiene ni solicita metadata interna. `hasConcreteDateTime` solo significa que el paciente ya dio fecha Y hora concretas. **INVARIANTE TÉCNICO (bloqueante):** la flag solo puede CONSUMIRSE; debe haber sido establecida por tools de steps ANTERIORES (`resolve_reschedule_target`→`hasResolvedRescheduleTarget`, `cancel_for_rescheduling`→`hasCancelledRescheduleTarget`, `resolve_treatment`→`hasResolvedTreatment`, `resolve_patient`/`lookup_patient`→`hasResolvedPatient`, `resolve_professional`→`hasResolvedProfessional`, `check_availability`→`hasShownSlots`, `schedule_block`→`hasCreatedAppointment`, `create_task`→`hasCreatedTask`, `resolve_availability_query`→`hasResolvedAvailabilityQuery`). Un step que requiere lo que su propia tool establece es una dependencia circular y bloquea el flow en runtime.
 - `note`: explicación para el LLM de qué hacer en este step
-- `customState`: campos que este step recoge, cada uno con `key` en `snake_case` y `description`; si se incluye, el campo es obligatorio y no admite `required`.
-- `when`: lista AND de condiciones; cada condición usa exactamente un operador v1 (`equals`, `in`, `notIn`, `exists`) y solo puede referenciar custom state o hechos tipados producidos por steps anteriores del mismo flow (`treatmentId`, `treatmentName`, `patientIsNew`).
-- Los IDs usados por `when.key=treatmentId` deben existir en `serviceCatalog.treatments[].id` cuando el catálogo declara IDs. Los catálogos legacy sin IDs siguen siendo compatibles.
-- **NO usar `personalized_user_conversation_state` en `tools` ni `allowedTools`**: es una tool interna del agente extractor.
 
 **Ejemplo correcto (condición en note):**
 ```json
@@ -263,12 +268,14 @@ Los flujos que ACTÚAN sobre una cita existente llevan un gate determinista. Con
 S1. **En full rescheduling, NEVER poner una herramienta destructiva antes de su contraparte constructiva.** En particular, `manage_schedule_block_status` (cancel definitivo) NUNCA debe estar en un paso ANTERIOR a `schedule_block`, ni en el MISMO paso (con o sin `parallel: true`). En tasks-only no existe `schedule_block`: si se configuran `manage_schedule_block_status` y `create_task` en el mismo flow, deben ser steps separados y secuenciales, con cancelación antes de tarea.
 
 S2. **Orden de reagendamiento en full mode (patrón canónico):**
-`cancel_for_rescheduling` → `resolve_availability_query` → `check_availability` → `schedule_block`.
-El backend captura el target de la cita original al ejecutar `cancel_for_rescheduling` (paso 1) y lo reutiliza automáticamente en `schedule_block` (paso 4). Si `selection.requiredCapabilities` incluye `hasConcreteDateTime`, `resolve_availability_query` puede omitirse y el orden se reduce a `cancel_for_rescheduling` → `check_availability` → `schedule_block`. La cancelación preparatoria vive en `steps`, NO en `allowedTools`, y `manage_schedule_block_status` está PROHIBIDO en este flow.
+`resolve_patient` → `resolve_reschedule_target` → `cancel_for_rescheduling` → `resolve_availability_query` → `check_availability` → `schedule_block`.
+Primero la identidad: con dos pacientes en el mismo teléfono, resolver la cita antes que el paciente es elegir por él. Después `resolve_reschedule_target` fija y persiste LA cita exacta — su step debe exigir `hasPatientTarget` — y solo entonces se libera con `cancel_for_rescheduling`, que conserva el target y sus sesiones y lo reutiliza en `schedule_block`. `resolve_patient` puede no llegar a llamarse en runtime cuando hay un único paciente objetivo DEFAULT, pero DEBE estar declarado. Si `selection.requiredCapabilities` incluye `hasConcreteDateTime`, `resolve_availability_query` puede omitirse y el orden queda `resolve_patient` → `resolve_reschedule_target` → `cancel_for_rescheduling` → `check_availability` → `schedule_block`: los dos primeros pasos NUNCA son opcionales, son los que deciden QUÉ cita se libera. `manage_schedule_block_status` está PROHIBIDO en este flow.
 
-S3. Un flujo de reagendamiento (intent `existing_appointment_rescheduling`) en full mode DEBE declarar `cancel_for_rescheduling` como paso 1 cuando incluye `schedule_block`. Solo puede omitir `resolve_availability_query` si declara `hasConcreteDateTime` en `selection.requiredCapabilities`.
+S3. Un flujo de reagendamiento (intent `existing_appointment_rescheduling`) en full mode que incluye `schedule_block` DEBE declarar las seis tools del orden canónico en `steps`, numeradas y en ese orden. Liberar una cita sin haberla resuelto puede cancelar la equivocada: con dos citas del mismo paciente el mismo día, `cancel_for_rescheduling` sin `resolve_reschedule_target` previo elige a ciegas.
 
 S3b. `allowedTools` es una lista blanca SIN ORDEN y no puede anclar el orden seguro. En reagendamiento full mode, las tools de escritura (`cancel_for_rescheduling`, `schedule_block`) deben vivir en `steps` numeradas en el orden canónico. `manage_schedule_block_status` NO debe aparecer en este flow.
+
+S3c. **Consulta de reagendamiento (`existing_appointment_reschedule_inquiry`) en full mode:** `resolve_patient` → `resolve_reschedule_target` → `resolve_availability_query` → `check_availability`. El foco se resuelve ANTES de consultar la agenda: el bot no puede enseñar ni prometer horarios para una cita que no ha identificado. Los huecos son informativos y NO autorizan a agendar; `cancel_for_rescheduling`, `schedule_block` y `manage_schedule_block_status` siguen prohibidos aquí.
 
 S4. `responseTemplateKey` es una referencia denotativa opcional al registro `responseTemplates`; nunca es texto dirigido al paciente. Si falta, no es un error: se loguea y se usa `patientOutcome` cuando exista o la IA.
 
@@ -294,3 +301,4 @@ S8. Un flujo cuyo intent es `existing_appointment_*` Y que usa una tool de escri
 - [ ] **GATE ciclo de vida:** confirm, cancel, running-late y keep requieren `selection.requiredCapabilities: ["hasActiveAppointment"]`; reschedule requiere esa capability o `alternativeRequiredCapabilities: ["hasCancelledRescheduleTarget"]`.
 - [ ] `existing_appointment_rescheduling` excluye "elegir hora de opciones propuestas para cita nueva" en su descripción
  - [ ] **S1-S8 FLOW SAFETY: orden destructivo correcto, intents canónicos para flows que escriben citas y steps en orden ascendente**
+- [ ] En full mode, reagendamiento y consulta de reagendamiento declaran `resolve_patient` y `resolve_reschedule_target` ANTES de liberar la cita o de consultar la agenda; el step de `resolve_reschedule_target` exige `hasPatientTarget`

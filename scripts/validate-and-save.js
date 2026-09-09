@@ -783,6 +783,37 @@ function validateFlowSafety(data, mode, errors) {
         const resolveIndex = firstStepWithTool(flow, 'resolve_availability_query');
         const availabilityIndex = firstStepWithTool(flow, 'check_availability');
         const scheduleIndex = firstStepWithTool(flow, 'schedule_block');
+        const patientIndex = firstStepWithTool(flow, 'resolve_patient');
+        const targetIndex = firstStepWithTool(flow, 'resolve_reschedule_target');
+
+        // El foco se resuelve ANTES de liberar la cita: sin `resolve_reschedule_target`
+        // el bot cancela una cita que no ha identificado, y con dos citas del mismo
+        // paciente puede liberar la que no era.
+        if (targetIndex < 0) {
+          errors.push({
+            category: 'business',
+            message: `Flow "${flowName}" (intent: ${flow.intent}) in full mode must declare "resolve_reschedule_target" before "cancel_for_rescheduling": the appointment must be identified and persisted before it is released.`,
+          });
+        } else if (cancelIndex >= 0 && targetIndex >= cancelIndex) {
+          errors.push({
+            category: 'business',
+            message: `Flow "${flowName}" (intent: ${flow.intent}) in full mode must order "resolve_reschedule_target" BEFORE "cancel_for_rescheduling". Releasing an appointment that has not been resolved can cancel the wrong one.`,
+          });
+        }
+
+        // La identidad manda sobre el foco: con dos pacientes asociados al mismo
+        // telefono, resolver la cita antes que el paciente elige por él.
+        if (patientIndex < 0) {
+          errors.push({
+            category: 'business',
+            message: `Flow "${flowName}" (intent: ${flow.intent}) in full mode must include "resolve_patient" in its steps. It may not be called when there is a single DEFAULT patient target, but it must be available for several patients or third parties.`,
+          });
+        } else if (targetIndex >= 0 && patientIndex >= targetIndex) {
+          errors.push({
+            category: 'business',
+            message: `Flow "${flowName}" (intent: ${flow.intent}) in full mode must order "resolve_patient" BEFORE "resolve_reschedule_target", and the target step must require "hasPatientTarget".`,
+          });
+        }
 
         if (cancelIndex < 0) {
           errors.push({
@@ -809,7 +840,7 @@ function validateFlowSafety(data, mode, errors) {
         if (scheduleIndex < 0 || availabilityIndex < 0 || resolveIndex < 0 || !(cancelIndex < resolveIndex && resolveIndex < availabilityIndex && availabilityIndex < scheduleIndex)) {
           errors.push({
             category: 'business',
-            message: `Flow "${flowName}" (intent: ${flow.intent}) declares "cancel_for_rescheduling" but must order cancel_for_rescheduling -> resolve_availability_query -> check_availability -> schedule_block in numbered steps. The backend target is captured before the new date and booking reuses it. If the patient always gives a concrete date AND time at turn start, declare "hasConcreteDateTime" in selection.requiredCapabilities to make "resolve_availability_query" optional.`,
+            message: `Flow "${flowName}" (intent: ${flow.intent}) declares "cancel_for_rescheduling" but must order resolve_patient -> resolve_reschedule_target -> cancel_for_rescheduling -> resolve_availability_query -> check_availability -> schedule_block in numbered steps. The backend target is captured before the new date and booking reuses it. If the patient always gives a concrete date AND time at turn start, declare "hasConcreteDateTime" in selection.requiredCapabilities to make "resolve_availability_query" optional.`,
           });
         }
       }

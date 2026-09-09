@@ -194,7 +194,6 @@
   "serviceCatalog": {
     "treatments": [
       {
-        "id": "primera-visita",
         "name": "Primera visita",
         "description": "Consulta inicial de evaluación",
         "priceDescription": "Consultar en clínica",

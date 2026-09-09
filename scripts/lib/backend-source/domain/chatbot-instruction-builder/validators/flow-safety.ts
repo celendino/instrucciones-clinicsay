@@ -76,7 +76,8 @@ const APPOINTMENT_WRITING_TOOLS = [CONSTRUCTIVE_TOOL, DESTRUCTIVE_TOOL, BULK_DES
  * `tool-call-policy` rechaza `schedule_block` hasta que la conversación escala al
  * flujo operativo y los promueve.
  */
-const RESCHEDULE_INQUIRY_REQUIRED_TOOLS = ['resolve_availability_query', 'check_availability'];
+const RESCHEDULE_INQUIRY_REQUIRED_TOOLS = ['resolve_reschedule_target', 'resolve_availability_query', 'check_availability'];
+const RESCHEDULE_PATIENT_TOOL = 'resolve_patient';
 
 const RESCHEDULE_INQUIRY_FORBIDDEN_TOOLS = [
   'cancel_for_rescheduling',
@@ -111,18 +112,15 @@ export const FLOW_SAFETY_PROMPT_RULES =
   `use it only for definitive cancellation, confirmation, or EN_ROUTE actions in their respective flows. ` +
   `Conversely, "cancel_for_rescheduling" is ONLY valid in rescheduling flows: definitive cancellation, confirmation ` +
   `and EN_ROUTE flows MUST use "manage_schedule_block_status" instead.\n` +
-  `S2. The mandatory full reschedule order is cancel_for_rescheduling -> resolve_availability_query -> check_availability -> schedule_block. ` +
-  `EXCEPTION: when the flow declares "selection": { "requiredCapabilities": [..., "hasConcreteDateTime"] } — the patient already ` +
-  `gave a concrete date AND time at turn start — "resolve_availability_query" MAY be omitted and the mandatory order becomes ` +
-  `cancel_for_rescheduling -> check_availability -> schedule_block. "check_availability" NEVER runs without a concrete date and time: ` +
-  `without that capability the resolve step is REQUIRED so the bot asks for the missing date or time. ` +
+  `S2. The mandatory full reschedule order is resolve_patient (when needed) -> patientTarget -> resolve_reschedule_target -> cancel_for_rescheduling -> resolve_availability_query -> check_availability -> schedule_block. ` +
+  `The appointment is released preparatorily BEFORE the new date is asked or consulted; resolve_availability_query and check_availability require the cancelled target and resolved dates. "check_availability" NEVER runs without concrete dates: ` +
+  `the resolve step is REQUIRED so the bot asks for the missing date or time. ` +
   `schedule_block also requires availability evidence from the CURRENT turn; inherited slots never authorize booking. ` +
   `If the chosen time is occupied, report that it is no longer available and offer real alternatives, never an expiration explanation. ` +
   `The first tool captures a validated backend target; it is not a definitive cancellation and the final booking reuses the persisted ` +
   `care plan and planned sessions.\n` +
-  `S3. A full reschedule flow that includes "schedule_block" MUST include "cancel_for_rescheduling" in numbered steps, and all four ` +
-  `tools in S2 MUST appear in that exact numbered order. Under the hasConcreteDateTime exception, "resolve_availability_query" ` +
-  `is the only one of the four that may be absent.\n` +
+  `S3. A full reschedule flow that includes "schedule_block" MUST include all seven tools in the deterministic order, and ` +
+  `the resolve_reschedule_target step must require patientTarget before the appointment target can be used.\n` +
   `S4. "responseTemplateKey" is an optional, denotative reference to the "responseTemplates" registry; it is never patient-facing text. ` +
   `The registry contains the patient-facing text and mode. Do not require a key for any flow, tool, step, or terminal step. ` +
   `When the key is absent, the backend logs the absence and the response uses patientOutcome when available or the AI generates it from context.\n` +
@@ -583,6 +581,57 @@ function validateRescheduleInquiryCanConsultAvailability(
       `Es CONSULTA informativa: los huecos que salgan de ahí no autorizan a agendar, así que sigue ` +
       `prohibido cancelar, mover o crear la cita desde este flujo.`,
   );
+
+  const resolverPosition = firstPositionWith(flow, 'resolve_reschedule_target');
+  const availabilityPosition = firstPositionWith(flow, 'check_availability');
+  if (resolverPosition >= 0 && availabilityPosition >= 0 && resolverPosition > availabilityPosition) {
+    errors.push(
+      `${header(flowName, flow)}: resolve_reschedule_target debe ejecutarse antes de consultar disponibilidad.`,
+    );
+  }
+}
+
+/**
+ * Every full rescheduling flow must expose patient resolution before resolving
+ * the appointment. The runtime may omit the call when the DEFAULT patient is
+ * unambiguous, but a third party or an ambiguous patient must be resolvable.
+ */
+function validateFullReschedulingPatientResolution(
+  flowName: string,
+  flow: ToolFlow,
+  mode: StructuredLogicChatMode,
+  errors: string[],
+): void {
+  if (
+    mode !== 'full' ||
+    (flow.intent !== 'existing_appointment_rescheduling' &&
+      flow.intent !== 'existing_appointment_reschedule_inquiry')
+  ) return;
+
+  const patientPosition = firstPositionWith(flow, RESCHEDULE_PATIENT_TOOL);
+  const targetPosition = firstPositionWith(flow, 'resolve_reschedule_target');
+  const targetStep = stepsOf(flow).find((step) => toolsOf(step).includes('resolve_reschedule_target'));
+
+  if (!inAllowedTools(flow, RESCHEDULE_PATIENT_TOOL)) {
+    errors.push(
+      `${header(flowName, flow)} en modo full debe incluir "${RESCHEDULE_PATIENT_TOOL}" en "allowedTools". ` +
+        `Puede no llamarse cuando hay un unico paciente objetivo DEFAULT, pero debe estar disponible para varios pacientes o terceros.`,
+    );
+  }
+  if (patientPosition < 0 || targetPosition < 0 || patientPosition >= targetPosition) {
+    errors.push(
+      `${header(flowName, flow)} en modo full debe declarar "${RESCHEDULE_PATIENT_TOOL}" antes de "resolve_reschedule_target".`,
+    );
+  }
+  if (
+    targetStep &&
+    (!Array.isArray((targetStep as { required?: string[] }).required) ||
+      !(targetStep as { required?: string[] }).required?.includes('hasPatientTarget'))
+  ) {
+    errors.push(
+      `${header(flowName, flow)} debe exigir "hasPatientTarget" antes de ejecutar "resolve_reschedule_target".`,
+    );
+  }
 }
 
 function validateRescheduleInquiry(flowName: string, flow: ToolFlow, errors: string[]): void {
@@ -657,13 +706,15 @@ function validateFullReschedulingContract(
     );
   }
 
+  // Cancel-first: the appointment is released preparatorily before the new
+  // date is asked or consulted, and the booking reuses the persisted target.
   const requiredTools = [
+    'resolve_reschedule_target',
     'cancel_for_rescheduling',
     'resolve_availability_query',
     'check_availability',
     'schedule_block',
   ];
-  const concreteDateTime = Array.isArray(requiredCapabilities) && requiredCapabilities.includes('hasConcreteDateTime');
   const steps = stepsOf(flow);
   const positions = requiredTools.map((tool) =>
     steps.findIndex((step) => toolsOf(step).includes(tool)),
@@ -671,24 +722,24 @@ function validateFullReschedulingContract(
 
   if (positions[0] < 0) {
     errors.push(
-      `${header(flowName, flow)} en modo full debe incluir "cancel_for_rescheduling" en un paso numerado ` +
-        `antes de consultar disponibilidad; es la cancelación preparatoria que conserva el target técnico.`
+      `${header(flowName, flow)} en modo full debe incluir "resolve_reschedule_target" antes de ` +
+        `"cancel_for_rescheduling"; el foco debe quedar resuelto antes de liberar la cita.`
     );
   }
-  if (positions[3] < 0) {
+  if (positions[4] < 0) {
     errors.push(
       `${header(flowName, flow)} en modo full debe incluir "schedule_block" como acción terminal de la reprogramación.`
     );
   }
-  if (positions[2] < 0) {
+  if (positions[3] < 0) {
     errors.push(
       `${header(flowName, flow)} en modo full debe incluir "check_availability" antes de "schedule_block".`
     );
   }
-  if (positions[1] < 0 && !concreteDateTime) {
+  if (positions[2] < 0) {
     errors.push(
       `${header(flowName, flow)} en modo full debe incluir "resolve_availability_query" antes de "check_availability" ` +
-        `cuando no declara "hasConcreteDateTime".`
+        `porque las fechas deben quedar resueltas antes de consultar disponibilidad.`
     );
   }
 
@@ -699,8 +750,8 @@ function validateFullReschedulingContract(
   ) {
     errors.push(
       `${header(flowName, flow)} en modo full debe ordenar ` +
-        `cancel_for_rescheduling -> resolve_availability_query -> check_availability -> schedule_block ` +
-        `(resolve_availability_query puede omitirse solo con hasConcreteDateTime).`
+        `resolve_reschedule_target -> cancel_for_rescheduling -> resolve_availability_query -> check_availability -> schedule_block ` +
+        `(patientTarget debe estar resuelto antes de resolve_reschedule_target; la cita se libera antes de consultar la agenda).`
     );
   }
 }
@@ -786,6 +837,7 @@ export function validateFlowSafety(
     validateActiveAppointmentGate(flowName, flow, errors);
     validateRescheduleInquiry(flowName, flow, errors);
     validateRescheduleInquiryCanConsultAvailability(flowName, flow, mode, errors);
+    validateFullReschedulingPatientResolution(flowName, flow, mode, errors);
     validateReschedulingSurvivesItsOwnCancellation(flowName, flow, errors);
     validateFullReschedulingContract(flowName, flow, mode, errors);
     validateNonAttendanceCancellation(flowName, flow, errors);

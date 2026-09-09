@@ -92,18 +92,19 @@ Este bot trabaja con `scheduling: false`. Gestiona citas ya existentes (confirma
 
 ### Tools Disponibles
 
-Las 6 tools disponibles en este modo son:
+Las 7 tools disponibles en este modo son:
 
 - `create_task` — Crear tarea administrativa para seguimiento humano. Tool principal cuando la solicitud requiere intervención humana.
 - `manage_schedule_block_status` — Gestionar UNA cita existente (confirmar, cancelar, marcar en camino).
 - `manage_all_schedule_blocks_for_date` — Gestionar TODAS las citas de un paciente en una fecha específica.
+- `resolve_patient` — Identificar o crear al paciente ANTES de una tarea de agendamiento, con los datos que el interlocutor haya dado explícitamente. No uses CALLER_PHONE ni los datos del contacto de Kommo como confirmados sin su autorización.
 - `lookup_patient` — Buscar paciente por teléfono, nombre o apellido. Solo lectura; no crea pacientes.
 - `query_protocol` — Consultar contenido de un protocolo por ID.
 - `query_knowledge_base` — Buscar semánticamente en protocols, FAQ, responseTemplates y rules cuando la respuesta no esté ya en contexto.
 
 ### Configuración Base
 - Copia las capabilities de `_templates/base-tasks-only.json`; no añadas `scheduling` por suposición. El modo tasks-only lo impone el validador y los flows.
-- Las únicas tools permitidas son: `create_task`, `manage_schedule_block_status`, `manage_all_schedule_blocks_for_date`, `lookup_patient`, `query_protocol`, `query_knowledge_base`.
+- Las únicas tools permitidas son: `create_task`, `resolve_patient`, `manage_schedule_block_status`, `manage_all_schedule_blocks_for_date`, `lookup_patient`, `query_protocol`, `query_knowledge_base`.
 - `create_task` puede usarse en estas situaciones:
   1. Limitaciones técnicas del bot: agendar nueva cita, buscar disponibilidad, reprogramar, resolver profesional/tratamiento.
   2. Reglas explícitas de la clínica: tratamientos o situaciones que los archivos de input indican que van a tarea.
@@ -191,8 +192,8 @@ Evoluciona `sedes/<nombre>/output/structured-logic.tasks-only.draft.json` **secc
 **REGLAS CRÍTICAS DE TASKS-ONLY:**
 - NUNCA uses scheduling tools: `check_availability`, `schedule_block`, `resolve_availability_query`
 - NUNCA uses `cancel_for_rescheduling` (reprogramming cannot execute una cancelación preparatoria en tasks-only).
-- NUNCA uses `resolve_patient`, `resolve_professional`, `resolve_treatment`
-- Tools permitidas por backend, schema y registry: `create_task`, `manage_schedule_block_status`, `manage_all_schedule_blocks_for_date`, `lookup_patient`, `query_protocol`, `query_knowledge_base`.
+- NUNCA uses `resolve_professional`, `resolve_treatment` ni `resolve_reschedule_target`. `resolve_patient` SÍ está disponible en tasks-only: se usa para identificar o crear al paciente antes de una tarea de agendamiento.
+- Tools permitidas por backend, schema y registry: `create_task`, `resolve_patient`, `manage_schedule_block_status`, `manage_all_schedule_blocks_for_date`, `lookup_patient`, `query_protocol`, `query_knowledge_base`.
 - `query_knowledge_base` busca semánticamente en `protocols`, `faq`, `responseTemplates` y `rules`. Debe estar disponible en flows informativos y usarse solo cuando la respuesta no esté ya en contexto. No sustituye tools de pacientes, citas o tareas.
 - El asesor puede elegir para cada solicitud: cancelación solamente; cancelación seguida de `create_task`; `create_task` sin cancelación; o respuesta informativa sin acción. `create_task` es opcional. Si se combina con cancelación, `manage_schedule_block_status` debe ser un step anterior y exitoso antes de ejecutar `create_task`.
 - `new_appointment_scheduling` y `existing_appointment_rescheduling` no pueden usar scheduling ni disponibilidad. Pueden crear tarea o responder informativamente, según la configuración del asesor.
@@ -365,7 +366,7 @@ Sintaxis del draft: válida
 3. **SIEMPRE detecta gaps.** `gap-detector.js` debe ejecutarse después de validación.
 4. **TASKS-ONLY específicos (NON-NEGOTIABLE):**
    - NUNCA uses `check_availability`, `schedule_block`, `resolve_availability_query`
-   - NUNCA uses `resolve_patient`, `resolve_professional`, `resolve_treatment`
+   - NUNCA uses `resolve_professional`, `resolve_treatment` ni `resolve_reschedule_target`. `resolve_patient` SÍ está disponible en tasks-only: se usa para identificar o crear al paciente antes de una tarea de agendamiento.
    - `new_appointment_scheduling` flow: puede usar `create_task` o ser informativo, según el asesor; nunca usa scheduling o disponibilidad.
    - Los templates de flows con `create_task` deben decir "te contactará nuestro equipo"; los flows informativos sin acción no deben prometer una tarea ni una cita agendada.
    - `redirectToTask: true` en rule de `new_appointment_scheduling` es el patrón típico (no obligatorio; su ausencia solo genera una nota advisory)
@@ -738,7 +739,7 @@ Este ejemplo recopila información y crea una tarea administrativa. No ejecuta s
 - `rules` array no vacío.
 - `responseTemplates` puede incluir templates base como `information_not_available`, `out_of_scope` y `farewell`; no son obligatorios.
 - `BusinessRule.action` es `"allow"` o `"block"`. Block rules DEBEN incluir `message` no vacío.
-- `ToolStep.tools` solo de las 6 tools disponibles: `create_task`, `manage_schedule_block_status`, `manage_all_schedule_blocks_for_date`, `lookup_patient`, `query_protocol`, `query_knowledge_base`.
+- `ToolStep.tools` solo de las 7 tools disponibles: `create_task`, `resolve_patient`, `manage_schedule_block_status`, `manage_all_schedule_blocks_for_date`, `lookup_patient`, `query_protocol`, `query_knowledge_base`.
 - `Protocol.responseTemplate` string no vacío si existe.
 - Prohibido intent `price_inquiry` (usar `general_inquiry` + `serviceCatalog`).
 - Flows con `query_knowledge_base` o `query_protocol` NO deben usar `responseTemplateKey` cuya entrada de registro tenga `mode: "literal"`.

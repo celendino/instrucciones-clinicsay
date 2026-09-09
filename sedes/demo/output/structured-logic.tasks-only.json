@@ -2,9 +2,18 @@
   "version": "1.0",
   "maxVisibleSlots": 4,
   "globalSchedulingPolicies": [
-    { "treatmentId": null, "allowedStartMinutes": [0, 30] }
+    {
+      "treatmentId": null,
+      "allowedStartMinutes": [
+        0,
+        30
+      ]
+    }
   ],
-  "capabilities": { "sensitiveSituations": true, "protocols": true },
+  "capabilities": {
+    "sensitiveSituations": true,
+    "protocols": true
+  },
   "identity": {
     "botName": "Asistente Demo Salud",
     "clinicName": "Clínica Demo Salud",
@@ -40,45 +49,149 @@
     ],
     "mustOfferHumanHandoff": true,
     "timeGreetingRanges": [
-      { "label": "dias", "start": "06:00", "end": "13:59", "greeting": "buenos días" },
-      { "label": "tardes", "start": "14:00", "end": "21:00", "greeting": "buenas tardes" },
-      { "label": "noches", "start": "21:01", "end": "05:59", "greeting": "buenas noches" }
+      {
+        "label": "dias",
+        "start": "06:00",
+        "end": "13:59",
+        "greeting": "buenos días"
+      },
+      {
+        "label": "tardes",
+        "start": "14:00",
+        "end": "21:00",
+        "greeting": "buenas tardes"
+      },
+      {
+        "label": "noches",
+        "start": "21:01",
+        "end": "05:59",
+        "greeting": "buenas noches"
+      }
     ]
   },
   "responseTemplates": {
-    "information_not_available": { "text": "No tengo información sobre eso en este momento. ¿Quieres que lo consulte con el equipo?", "mode": "model" },
-    "out_of_scope": { "text": "Soy el asistente de Clínica Demo Salud y solo puedo ayudarte con nuestros servicios, tratamientos y citas. ¿En qué puedo ayudarte?", "mode": "model" },
-    "farewell": { "text": "Gracias por contactar con Clínica Demo Salud. Si necesitas algo más, estamos aquí.", "mode": "model" },
-    "appointment_cancelled": { "text": "Tu cita ha sido cancelada. Si deseas reprogramar, podemos ayudarte.", "mode": "literal" },
-    "appointment_confirmed": { "text": "Tu cita ha quedado confirmada. Te esperamos.", "mode": "literal" },
-    "task_created": { "text": "Lo paso a recepción para que puedan revisarlo y contactar contigo lo antes posible.", "mode": "model" },
-    "on_the_way": { "text": "Gracias por avisar. Te esperamos.", "mode": "model" },
-    "change_requested": { "text": "He creado una solicitud para el equipo. Te contactarán para gestionar el cambio.", "mode": "model" },
-    "reschedule_inquiry": { "text": "El equipo puede ayudarte a gestionar el cambio de tu cita. ¿Quieres que dejemos la solicitud preparada?", "mode": "model" },
-    "appointment_info": { "text": "Responde con la información de las citas existentes disponible en ASSOCIATED_PATIENTS.", "mode": "model" },
-    "location_response": { "text": "Estamos en Calle Ficticia 123, 28001 Madrid. Puedes contactarnos en el +34 600 123 456 o hola@clinicademo.es.", "mode": "model" },
-    "post_treatment_follow_up": { "text": "Para orientarte bien, voy a pasar tu caso al equipo para que puedan revisarlo con criterio profesional.", "mode": "model" }
+    "information_not_available": {
+      "text": "No tengo información sobre eso en este momento. ¿Quieres que lo consulte con el equipo?",
+      "mode": "model"
+    },
+    "out_of_scope": {
+      "text": "Soy el asistente de Clínica Demo Salud y solo puedo ayudarte con nuestros servicios, tratamientos y citas. ¿En qué puedo ayudarte?",
+      "mode": "model"
+    },
+    "farewell": {
+      "text": "Gracias por contactar con Clínica Demo Salud. Si necesitas algo más, estamos aquí.",
+      "mode": "model"
+    },
+    "appointment_cancelled": {
+      "text": "Tu cita ha sido cancelada. Si deseas reprogramar, podemos ayudarte.",
+      "mode": "literal"
+    },
+    "appointment_confirmed": {
+      "text": "Tu cita ha quedado confirmada. Te esperamos.",
+      "mode": "literal"
+    },
+    "task_created": {
+      "text": "Lo paso a recepción para que puedan revisarlo y contactar contigo lo antes posible.",
+      "mode": "model"
+    },
+    "on_the_way": {
+      "text": "Gracias por avisar. Te esperamos.",
+      "mode": "model"
+    },
+    "change_requested": {
+      "text": "He creado una solicitud para el equipo. Te contactarán para gestionar el cambio.",
+      "mode": "model"
+    },
+    "reschedule_inquiry": {
+      "text": "El equipo puede ayudarte a gestionar el cambio de tu cita. ¿Quieres que dejemos la solicitud preparada?",
+      "mode": "model"
+    },
+    "appointment_info": {
+      "text": "Responde con la información de las citas existentes disponible en ASSOCIATED_PATIENTS.",
+      "mode": "model"
+    },
+    "location_response": {
+      "text": "Estamos en Calle Ficticia 123, 28001 Madrid. Puedes contactarnos en el +34 600 123 456 o hola@clinicademo.es.",
+      "mode": "model"
+    },
+    "post_treatment_follow_up": {
+      "text": "Para orientarte bien, voy a pasar tu caso al equipo para que puedan revisarlo con criterio profesional.",
+      "mode": "model"
+    }
   },
   "faq": [
-    { "question": "¿Cuánto cuesta una sesión?", "answer": "La fisioterapia cuesta 40 € por sesión y el bono de 3 sesiones cuesta 110 €.", "condition": null },
-    { "question": "¿Dónde estáis?", "answer": "Estamos en Calle Ficticia 123, 28001 Madrid.", "condition": null },
-    { "question": "¿Qué formas de pago aceptáis?", "answer": "Aceptamos efectivo, tarjeta, Bizum y transferencia.", "condition": null },
-    { "question": "¿Tenéis bonos?", "answer": "Sí, tenemos un bono de 3 sesiones de fisioterapia por 110 €.", "condition": null }
+    {
+      "question": "¿Cuánto cuesta una sesión?",
+      "answer": "La fisioterapia cuesta 40 € por sesión y el bono de 3 sesiones cuesta 110 €.",
+      "condition": null
+    },
+    {
+      "question": "¿Dónde estáis?",
+      "answer": "Estamos en Calle Ficticia 123, 28001 Madrid.",
+      "condition": null
+    },
+    {
+      "question": "¿Qué formas de pago aceptáis?",
+      "answer": "Aceptamos efectivo, tarjeta, Bizum y transferencia.",
+      "condition": null
+    },
+    {
+      "question": "¿Tenéis bonos?",
+      "answer": "Sí, tenemos un bono de 3 sesiones de fisioterapia por 110 €.",
+      "condition": null
+    }
   ],
   "serviceCatalog": {
     "treatments": [
-      { "id": "fisioterapia-general", "name": "Fisioterapia general", "description": "Sesión de fisioterapia general", "priceDescription": "40 €/sesión", "requiresConsultation": false },
-      { "id": "osteopatia", "name": "Osteopatía", "description": "Sesión de osteopatía", "priceDescription": "50 €/sesión", "requiresConsultation": false },
-      { "id": "indiba", "name": "Indiba", "description": "Sesión de Indiba", "priceDescription": "45 €/sesión", "requiresConsultation": false }
+      {
+        "name": "Fisioterapia general",
+        "description": "Sesión de fisioterapia general",
+        "priceDescription": "40 €/sesión",
+        "requiresConsultation": false
+      },
+      {
+        "name": "Osteopatía",
+        "description": "Sesión de osteopatía",
+        "priceDescription": "50 €/sesión",
+        "requiresConsultation": false
+      },
+      {
+        "name": "Indiba",
+        "description": "Sesión de Indiba",
+        "priceDescription": "45 €/sesión",
+        "requiresConsultation": false
+      }
     ],
     "packs": [
-      { "name": "Bono 3 sesiones de fisioterapia", "description": "Bono de 3 sesiones", "priceDescription": "110 €", "requiresConsultation": false }
+      {
+        "name": "Bono 3 sesiones de fisioterapia",
+        "description": "Bono de 3 sesiones",
+        "priceDescription": "110 €",
+        "requiresConsultation": false
+      }
     ]
   },
   "treatmentSelectionGuidance": "Esta guía se inyecta en el prompt del orquestador para orientar la selección y aclaración, no en resolve_treatment. Si el paciente es nuevo, pregunta si busca una valoración inicial o una sesión concreta, sin inventar una opción de valoración que no figure en serviceCatalog. Si ya existe y pide continuar, respeta el tratamiento que indique y usa solo Fisioterapia general, Osteopatía o Indiba del catálogo. Si hay ambigüedad, pide aclaración.",
   "protocols": {
-    "cancellation": { "name": "Cancelación de citas", "description": "La clínica solicita cancelación con 24h de antelación.", "responseTemplate": "La clínica solicita avisar con 24 horas de antelación para cancelar una cita.", "sections": ["Avisar con 24 horas de antelación"] },
-    "payments": { "name": "Formas de pago", "description": "Medios de pago indicados por la clínica.", "responseTemplate": "Aceptamos efectivo, tarjeta, Bizum y transferencia. Los bonos se pagan en el momento.", "sections": ["Efectivo", "Tarjeta", "Bizum", "Transferencia"] }
+    "cancellation": {
+      "name": "Cancelación de citas",
+      "description": "La clínica solicita cancelación con 24h de antelación.",
+      "responseTemplate": "La clínica solicita avisar con 24 horas de antelación para cancelar una cita.",
+      "sections": [
+        "Avisar con 24 horas de antelación"
+      ]
+    },
+    "payments": {
+      "name": "Formas de pago",
+      "description": "Medios de pago indicados por la clínica.",
+      "responseTemplate": "Aceptamos efectivo, tarjeta, Bizum y transferencia. Los bonos se pagan en el momento.",
+      "sections": [
+        "Efectivo",
+        "Tarjeta",
+        "Bizum",
+        "Transferencia"
+      ]
+    }
   },
   "treatmentPolicyHints": [],
   "systemPromptInstructions": {
@@ -91,7 +204,9 @@
       "Las solicitudes de nueva cita usan create_task. La cancelación gestiona la cita existente y una tarea posterior de seguimiento es opcional, siempre secuencial y solo si procede."
     ],
     "knownGaps": [],
-    "recommendedNextSteps": ["Confirmar en el backend los profesionales y tratamientos operativos antes de producción."]
+    "recommendedNextSteps": [
+      "Confirmar en el backend los profesionales y tratamientos operativos antes de producción."
+    ]
   },
   "conversationResumption": {
     "instructions": {
@@ -103,53 +218,433 @@
     }
   },
   "intents": {
-    "existing_appointment_confirmation": { "description": "El paciente confirma asistencia a una cita existente.", "examples": ["confirmo"] },
-    "existing_appointment_cancellation": { "description": "El paciente cancela una cita existente o indica que no podrá asistir.", "examples": ["cancela mi cita"] },
-    "existing_appointment_inquiry": { "description": "El paciente pregunta por una cita ya reservada.", "examples": ["¿cuándo es mi cita?"] },
-    "new_appointment_scheduling": { "description": "El paciente quiere una nueva cita o consultar disponibilidad; en este modo se deriva a tarea.", "examples": ["quiero pedir cita"] },
-    "general_inquiry": { "description": "Pregunta general sobre servicios, precios, ubicación, horario o pagos.", "examples": ["¿qué tratamientos tenéis?"] },
-    "human_follow_up": { "description": "Solicitud que requiere seguimiento humano.", "examples": ["quiero hablar con alguien"] },
-    "farewell": { "description": "El paciente se despide o cierra la conversación.", "examples": ["gracias"] },
-    "existing_appointment_rescheduling": { "description": "El paciente quiere mover una cita existente; en este modo se cancela y se crea tarea.", "examples": ["muévela al jueves"] },
-    "existing_appointment_delay_notice": { "description": "El paciente avisa de que llegará tarde a una cita existente.", "examples": ["llego tarde"] },
-    "existing_appointment_reschedule_inquiry": { "description": "El paciente pregunta si puede cambiar una cita, sin ordenar el cambio.", "examples": ["¿puedo cambiarla?"] },
-    "existing_appointment_cancellation_inquiry": { "description": "El paciente pregunta por cancelar sin ordenarlo todavía.", "examples": ["¿cómo cancelo?"] },
-    "existing_appointment_keep": { "description": "El paciente quiere mantener su cita.", "examples": ["déjala igual"] },
-    "location_contact_inquiry": { "description": "El paciente pregunta por la dirección o los datos de contacto de la clínica.", "examples": ["¿dónde estáis?", "¿cuál es vuestro teléfono?"] },
-    "post_treatment_follow_up": { "description": "El paciente comunica molestias o síntomas después de un tratamiento y requiere revisión del equipo.", "examples": ["me duele después de la sesión", "¿es normal este dolor?"] }
+    "existing_appointment_confirmation": {
+      "description": "El paciente confirma asistencia a una cita existente.",
+      "examples": [
+        "confirmo"
+      ]
+    },
+    "existing_appointment_cancellation": {
+      "description": "El paciente cancela una cita existente o indica que no podrá asistir.",
+      "examples": [
+        "cancela mi cita"
+      ]
+    },
+    "existing_appointment_inquiry": {
+      "description": "El paciente pregunta por una cita ya reservada.",
+      "examples": [
+        "¿cuándo es mi cita?"
+      ]
+    },
+    "new_appointment_scheduling": {
+      "description": "El paciente quiere una nueva cita o consultar disponibilidad; en este modo se deriva a tarea.",
+      "examples": [
+        "quiero pedir cita"
+      ]
+    },
+    "general_inquiry": {
+      "description": "Pregunta general sobre servicios, precios, ubicación, horario o pagos.",
+      "examples": [
+        "¿qué tratamientos tenéis?"
+      ]
+    },
+    "human_follow_up": {
+      "description": "Solicitud que requiere seguimiento humano.",
+      "examples": [
+        "quiero hablar con alguien"
+      ]
+    },
+    "farewell": {
+      "description": "El paciente se despide o cierra la conversación.",
+      "examples": [
+        "gracias"
+      ]
+    },
+    "existing_appointment_rescheduling": {
+      "description": "El paciente quiere mover una cita existente; en este modo se cancela y se crea tarea.",
+      "examples": [
+        "muévela al jueves"
+      ]
+    },
+    "existing_appointment_delay_notice": {
+      "description": "El paciente avisa de que llegará tarde a una cita existente.",
+      "examples": [
+        "llego tarde"
+      ]
+    },
+    "existing_appointment_reschedule_inquiry": {
+      "description": "El paciente pregunta si puede cambiar una cita, sin ordenar el cambio.",
+      "examples": [
+        "¿puedo cambiarla?"
+      ]
+    },
+    "existing_appointment_cancellation_inquiry": {
+      "description": "El paciente pregunta por cancelar sin ordenarlo todavía.",
+      "examples": [
+        "¿cómo cancelo?"
+      ]
+    },
+    "existing_appointment_keep": {
+      "description": "El paciente quiere mantener su cita.",
+      "examples": [
+        "déjala igual"
+      ]
+    },
+    "location_contact_inquiry": {
+      "description": "El paciente pregunta por la dirección o los datos de contacto de la clínica.",
+      "examples": [
+        "¿dónde estáis?",
+        "¿cuál es vuestro teléfono?"
+      ]
+    },
+    "post_treatment_follow_up": {
+      "description": "El paciente comunica molestias o síntomas después de un tratamiento y requiere revisión del equipo.",
+      "examples": [
+        "me duele después de la sesión",
+        "¿es normal este dolor?"
+      ]
+    }
   },
   "toolOrchestration": {
     "flows": {
-      "any_scheduling_request": { "intent": "new_appointment_scheduling", "description": "Recopila datos y crea una tarea para agendar; no consulta disponibilidad.", "steps": [{ "step": 1, "tools": ["create_task"], "parallel": false, "required": [], "note": "Recopilar nombre, apellido, teléfono, motivo, preferencia horaria, profesional si procede y si es paciente nuevo o existente; crear tarea." }], "responseTemplateKey": "task_created", "allowedTools": ["create_task"] },
-      "confirm_existing_appointment": { "intent": "existing_appointment_confirmation", "description": "Confirma una cita existente.", "selection": { "requiredCapabilities": ["hasActiveAppointment"] }, "steps": [{ "step": 1, "tools": ["manage_schedule_block_status"], "parallel": false, "required": [], "note": "Marcar CONFIRMADA." }], "responseTemplateKey": "appointment_confirmed", "allowedTools": ["manage_schedule_block_status"] },
-      "cancel_existing_appointment": { "intent": "existing_appointment_cancellation", "description": "Cancela una cita existente y deja la tarea posterior como opción operativa.", "selection": { "requiredCapabilities": ["hasActiveAppointment"] }, "steps": [{ "step": 1, "tools": ["manage_schedule_block_status"], "parallel": false, "required": [], "note": "Marcar CANCELADA con reason='Solicitud del paciente'." }, { "step": 2, "tools": ["create_task"], "parallel": false, "required": [], "note": "Opcional: crear tarea solo si la clínica o el paciente requiere seguimiento; siempre después de cancelar con éxito." }], "responseTemplateKey": "appointment_cancelled", "allowedTools": ["manage_schedule_block_status", "create_task"] },
-      "reschedule_existing_appointment": { "intent": "existing_appointment_rescheduling", "description": "Cancela la cita existente y crea una tarea para que el equipo gestione la nueva fecha.", "selection": { "requiredCapabilities": ["hasActiveAppointment"] }, "steps": [{ "step": 1, "tools": ["manage_schedule_block_status"], "parallel": false, "required": [], "note": "Cancelar con reason='Solicitud del paciente'." }, { "step": 2, "tools": ["create_task"], "parallel": false, "required": [], "note": "Crear tarea para gestionar la reprogramación, siempre después de la cancelación." }], "responseTemplateKey": "change_requested", "allowedTools": ["manage_schedule_block_status", "create_task"] },
-      "mark_on_the_way": { "intent": "existing_appointment_delay_notice", "description": "Marca EN_CAMINO una cita existente.", "selection": { "requiredCapabilities": ["hasActiveAppointment"] }, "steps": [{ "step": 1, "tools": ["manage_schedule_block_status"], "parallel": false, "required": [], "note": "Marcar EN_CAMINO; crear tarea solo cuando el protocolo operativo lo requiera." }], "responseTemplateKey": "on_the_way", "allowedTools": ["manage_schedule_block_status"] },
-      "general_inquiry": { "intent": "general_inquiry", "description": "Responde preguntas generales con contexto o búsqueda semántica.", "steps": [{ "step": 1, "tools": ["query_knowledge_base"], "parallel": false, "required": [], "note": "Usar solo si la respuesta no está ya en contexto." }], "allowedTools": ["query_knowledge_base"] },
-      "existing_appointment_inquiry": { "intent": "existing_appointment_inquiry", "description": "Consulta el contexto de citas existentes.", "steps": [{ "step": 1, "tools": [], "parallel": false, "required": [], "note": "Responder con ASSOCIATED_PATIENTS." }], "responseTemplateKey": "appointment_info" },
-      "human_follow_up": { "intent": "human_follow_up", "description": "Crea seguimiento para recepción.", "steps": [{ "step": 1, "tools": ["create_task"], "parallel": false, "required": [], "note": "Crear tarea con motivo y datos disponibles." }], "responseTemplateKey": "task_created", "allowedTools": ["create_task"] },
-      "post_treatment_follow_up": { "intent": "post_treatment_follow_up", "description": "Deriva molestias posteriores al equipo.", "steps": [{ "step": 1, "tools": ["create_task"], "parallel": false, "required": [], "note": "Crear tarea sin diagnosticar." }], "responseTemplateKey": "post_treatment_follow_up", "allowedTools": ["create_task"] },
-      "reschedule_inquiry": { "intent": "existing_appointment_reschedule_inquiry", "description": "Informa sobre la reprogramación sin ejecutar cambios.", "steps": [{ "step": 1, "tools": [], "parallel": false, "required": [], "note": "No cancelar ni crear tarea hasta que el paciente confirme la solicitud." }], "responseTemplateKey": "reschedule_inquiry" },
-      "location_contact_inquiry": { "intent": "location_contact_inquiry", "description": "Informa sobre dirección y contacto.", "steps": [{ "step": 1, "tools": [], "parallel": false, "required": [] }], "responseTemplateKey": "location_response" },
-      "farewell": { "intent": "farewell", "description": "Cierra la conversación.", "steps": [{ "step": 1, "tools": [], "parallel": false, "required": [] }], "responseTemplateKey": "farewell", "allowsSilence": true }
+      "any_scheduling_request": {
+        "intent": "new_appointment_scheduling",
+        "description": "Recopila datos y crea una tarea para agendar; no consulta disponibilidad.",
+        "steps": [
+          {
+            "step": 1,
+            "tools": [
+              "create_task"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Recopilar nombre, apellido, teléfono, motivo, preferencia horaria, profesional si procede y si es paciente nuevo o existente; crear tarea."
+          }
+        ],
+        "responseTemplateKey": "task_created",
+        "allowedTools": [
+          "create_task"
+        ]
+      },
+      "confirm_existing_appointment": {
+        "intent": "existing_appointment_confirmation",
+        "description": "Confirma una cita existente.",
+        "selection": {
+          "requiredCapabilities": [
+            "hasActiveAppointment"
+          ]
+        },
+        "steps": [
+          {
+            "step": 1,
+            "tools": [
+              "manage_schedule_block_status"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Marcar CONFIRMADA."
+          }
+        ],
+        "responseTemplateKey": "appointment_confirmed",
+        "allowedTools": [
+          "manage_schedule_block_status"
+        ]
+      },
+      "cancel_existing_appointment": {
+        "intent": "existing_appointment_cancellation",
+        "description": "Cancela una cita existente y deja la tarea posterior como opción operativa.",
+        "selection": {
+          "requiredCapabilities": [
+            "hasActiveAppointment"
+          ]
+        },
+        "steps": [
+          {
+            "step": 1,
+            "tools": [
+              "manage_schedule_block_status"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Marcar CANCELADA con reason='Solicitud del paciente'."
+          },
+          {
+            "step": 2,
+            "tools": [
+              "create_task"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Opcional: crear tarea solo si la clínica o el paciente requiere seguimiento; siempre después de cancelar con éxito."
+          }
+        ],
+        "responseTemplateKey": "appointment_cancelled",
+        "allowedTools": [
+          "manage_schedule_block_status",
+          "create_task"
+        ]
+      },
+      "reschedule_existing_appointment": {
+        "intent": "existing_appointment_rescheduling",
+        "description": "Cancela la cita existente y crea una tarea para que el equipo gestione la nueva fecha.",
+        "selection": {
+          "requiredCapabilities": [
+            "hasActiveAppointment"
+          ]
+        },
+        "steps": [
+          {
+            "step": 1,
+            "tools": [
+              "manage_schedule_block_status"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Cancelar con reason='Solicitud del paciente'."
+          },
+          {
+            "step": 2,
+            "tools": [
+              "create_task"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Crear tarea para gestionar la reprogramación, siempre después de la cancelación."
+          }
+        ],
+        "responseTemplateKey": "change_requested",
+        "allowedTools": [
+          "manage_schedule_block_status",
+          "create_task"
+        ]
+      },
+      "mark_on_the_way": {
+        "intent": "existing_appointment_delay_notice",
+        "description": "Marca EN_CAMINO una cita existente.",
+        "selection": {
+          "requiredCapabilities": [
+            "hasActiveAppointment"
+          ]
+        },
+        "steps": [
+          {
+            "step": 1,
+            "tools": [
+              "manage_schedule_block_status"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Marcar EN_CAMINO; crear tarea solo cuando el protocolo operativo lo requiera."
+          }
+        ],
+        "responseTemplateKey": "on_the_way",
+        "allowedTools": [
+          "manage_schedule_block_status"
+        ]
+      },
+      "general_inquiry": {
+        "intent": "general_inquiry",
+        "description": "Responde preguntas generales con contexto o búsqueda semántica.",
+        "steps": [
+          {
+            "step": 1,
+            "tools": [
+              "query_knowledge_base"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Usar solo si la respuesta no está ya en contexto."
+          }
+        ],
+        "allowedTools": [
+          "query_knowledge_base"
+        ]
+      },
+      "existing_appointment_inquiry": {
+        "intent": "existing_appointment_inquiry",
+        "description": "Consulta el contexto de citas existentes.",
+        "steps": [
+          {
+            "step": 1,
+            "tools": [],
+            "parallel": false,
+            "required": [],
+            "note": "Responder con ASSOCIATED_PATIENTS."
+          }
+        ],
+        "responseTemplateKey": "appointment_info"
+      },
+      "human_follow_up": {
+        "intent": "human_follow_up",
+        "description": "Crea seguimiento para recepción.",
+        "steps": [
+          {
+            "step": 1,
+            "tools": [
+              "create_task"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Crear tarea con motivo y datos disponibles."
+          }
+        ],
+        "responseTemplateKey": "task_created",
+        "allowedTools": [
+          "create_task"
+        ]
+      },
+      "post_treatment_follow_up": {
+        "intent": "post_treatment_follow_up",
+        "description": "Deriva molestias posteriores al equipo.",
+        "steps": [
+          {
+            "step": 1,
+            "tools": [
+              "create_task"
+            ],
+            "parallel": false,
+            "required": [],
+            "note": "Crear tarea sin diagnosticar."
+          }
+        ],
+        "responseTemplateKey": "post_treatment_follow_up",
+        "allowedTools": [
+          "create_task"
+        ]
+      },
+      "reschedule_inquiry": {
+        "intent": "existing_appointment_reschedule_inquiry",
+        "description": "Informa sobre la reprogramación sin ejecutar cambios.",
+        "steps": [
+          {
+            "step": 1,
+            "tools": [],
+            "parallel": false,
+            "required": [],
+            "note": "No cancelar ni crear tarea hasta que el paciente confirme la solicitud."
+          }
+        ],
+        "responseTemplateKey": "reschedule_inquiry"
+      },
+      "location_contact_inquiry": {
+        "intent": "location_contact_inquiry",
+        "description": "Informa sobre dirección y contacto.",
+        "steps": [
+          {
+            "step": 1,
+            "tools": [],
+            "parallel": false,
+            "required": []
+          }
+        ],
+        "responseTemplateKey": "location_response"
+      },
+      "farewell": {
+        "intent": "farewell",
+        "description": "Cierra la conversación.",
+        "steps": [
+          {
+            "step": 1,
+            "tools": [],
+            "parallel": false,
+            "required": []
+          }
+        ],
+        "responseTemplateKey": "farewell",
+        "allowsSilence": true
+      }
     }
   },
   "rules": [
-    { "id": "existing_appointment_inquiry", "intent": "existing_appointment_inquiry", "description": "Consulta de una cita existente.", "action": "allow" },
-    { "id": "existing_appointment_confirmation", "intent": "existing_appointment_confirmation", "description": "Confirmación de asistencia.", "action": "allow" },
-    { "id": "existing_appointment_cancellation", "intent": "existing_appointment_cancellation", "description": "Cancelación de una cita existente.", "action": "allow" },
-    { "id": "new_appointment_scheduling", "intent": "new_appointment_scheduling", "description": "Solicitud de nueva cita que termina en tarea.", "action": "allow", "redirectToTask": true },
-    { "id": "existing_appointment_rescheduling", "intent": "existing_appointment_rescheduling", "description": "Solicitud de cambio que termina en tarea.", "action": "allow", "redirectToTask": true },
-    { "id": "existing_appointment_reschedule_inquiry", "intent": "existing_appointment_reschedule_inquiry", "description": "Consulta informativa sobre cambio.", "action": "allow" },
-    { "id": "existing_appointment_delay_notice", "intent": "existing_appointment_delay_notice", "description": "Aviso de retraso.", "action": "allow" },
-    { "id": "human_follow_up", "intent": "human_follow_up", "description": "Solicitud de revisión humana.", "action": "allow" },
-    { "id": "general_inquiry", "intent": "general_inquiry", "description": "Pregunta general sobre la clínica.", "action": "allow" },
-    { "id": "farewell", "intent": "farewell", "description": "Despedida del paciente.", "action": "allow" },
-    { "id": "existing_appointment_cancellation_inquiry", "intent": "existing_appointment_cancellation_inquiry", "description": "Consulta informativa sobre cancelación.", "action": "allow" },
-    { "id": "existing_appointment_keep", "intent": "existing_appointment_keep", "description": "El paciente mantiene su cita.", "action": "allow" }
+    {
+      "id": "existing_appointment_inquiry",
+      "intent": "existing_appointment_inquiry",
+      "description": "Consulta de una cita existente.",
+      "action": "allow"
+    },
+    {
+      "id": "existing_appointment_confirmation",
+      "intent": "existing_appointment_confirmation",
+      "description": "Confirmación de asistencia.",
+      "action": "allow"
+    },
+    {
+      "id": "existing_appointment_cancellation",
+      "intent": "existing_appointment_cancellation",
+      "description": "Cancelación de una cita existente.",
+      "action": "allow"
+    },
+    {
+      "id": "new_appointment_scheduling",
+      "intent": "new_appointment_scheduling",
+      "description": "Solicitud de nueva cita que termina en tarea.",
+      "action": "allow",
+      "redirectToTask": true
+    },
+    {
+      "id": "existing_appointment_rescheduling",
+      "intent": "existing_appointment_rescheduling",
+      "description": "Solicitud de cambio que termina en tarea.",
+      "action": "allow",
+      "redirectToTask": true
+    },
+    {
+      "id": "existing_appointment_reschedule_inquiry",
+      "intent": "existing_appointment_reschedule_inquiry",
+      "description": "Consulta informativa sobre cambio.",
+      "action": "allow"
+    },
+    {
+      "id": "existing_appointment_delay_notice",
+      "intent": "existing_appointment_delay_notice",
+      "description": "Aviso de retraso.",
+      "action": "allow"
+    },
+    {
+      "id": "human_follow_up",
+      "intent": "human_follow_up",
+      "description": "Solicitud de revisión humana.",
+      "action": "allow"
+    },
+    {
+      "id": "general_inquiry",
+      "intent": "general_inquiry",
+      "description": "Pregunta general sobre la clínica.",
+      "action": "allow"
+    },
+    {
+      "id": "farewell",
+      "intent": "farewell",
+      "description": "Despedida del paciente.",
+      "action": "allow"
+    },
+    {
+      "id": "existing_appointment_cancellation_inquiry",
+      "intent": "existing_appointment_cancellation_inquiry",
+      "description": "Consulta informativa sobre cancelación.",
+      "action": "allow"
+    },
+    {
+      "id": "existing_appointment_keep",
+      "intent": "existing_appointment_keep",
+      "description": "El paciente mantiene su cita.",
+      "action": "allow"
+    }
   ],
   "errorCategories": [
-    { "id": "task_without_execution", "description": "Se promete seguimiento sin crear tarea.", "suggestions": ["Ejecutar create_task antes de informar del seguimiento."] },
-    { "id": "scheduling_in_tasks_only", "description": "Se intenta consultar disponibilidad o reservar directamente.", "suggestions": ["Usar create_task y no tools de scheduling."] }
+    {
+      "id": "task_without_execution",
+      "description": "Se promete seguimiento sin crear tarea.",
+      "suggestions": [
+        "Ejecutar create_task antes de informar del seguimiento."
+      ]
+    },
+    {
+      "id": "scheduling_in_tasks_only",
+      "description": "Se intenta consultar disponibilidad o reservar directamente.",
+      "suggestions": [
+        "Usar create_task y no tools de scheduling."
+      ]
+    }
   ]
 }
