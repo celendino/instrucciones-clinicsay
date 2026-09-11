@@ -15,7 +15,7 @@ Crea exactamente estos 12 intents canónicos como mínimo (copia los del templat
 |---|---|
 | `existing_appointment_confirmation` | El paciente confirma asistencia a una cita YA EXISTENTE: respondiendo a un recordatorio (IS_REMINDER_REPLY=true) o teniendo una cita activa en el contexto. NO usar cuando el bot acaba de PROPONER una hora nueva para agendar: en ese caso la intención es `new_appointment_scheduling` (continuar el agendamiento). |
 | `existing_appointment_cancellation` | El paciente cancela definitivamente una cita existente o indica que no podrá asistir; no implica reagendar. |
-| `existing_appointment_inquiry` | El paciente pregunta por citas que ya tiene reservadas (horarios, fechas, tratamientos). La información ya está en el contexto. |
+| `existing_appointment_inquiry` | El paciente pregunta por citas que ya tiene reservadas (horarios, fechas, tratamientos). Las del titular del número están en el contexto; para otra persona o un número distinto el bot busca la ficha con `lookup_patient`. |
 | `new_appointment_scheduling` | El paciente quiere reservar una NUEVA cita o consultar disponibilidad. |
 | `general_inquiry` | Preguntas generales sobre la clínica: horarios, ubicación, contacto, precios fijos, servicios. |
 | `human_follow_up` | Solicitudes que requieren seguimiento humano y no encajan en los intents anteriores. |

@@ -137,7 +137,9 @@ export const TOOL_RESOLVE_PATIENT: ChatToolDefinition = {
     'Identificar o crear un paciente antes de crear una tarea de agendamiento. ' +
     'USAR ANTES de create_task de agendamiento si no hay paciente resuelto. ' +
     'El telefono debe ser proporcionado explicitamente por el interlocutor; no sustituyas phone con datos del contacto. ' +
-    'NUNCA uses CALLER_PHONE, ASSOCIATED_PATIENTS ni datos del contacto de Kommo como datos confirmados sin autorizacion del interlocutor.',
+    'NUNCA uses CALLER_PHONE, ASSOCIATED_PATIENTS ni datos del contacto de Kommo como datos confirmados sin autorizacion del interlocutor. ' +
+    'Basta un nombre y un apellido tal como los dice el interlocutor (sin tildes, con apodo o con un error de tecleo). ' +
+    'Si devuelve status "ambiguous", pide EXACTAMENTE el dato indicado en askFor y vuelve a llamar; NUNCA enumeres nombres ni datos de las fichas candidatas.',
   parameters: {
     type: 'object',
     additionalProperties: false,
@@ -154,6 +156,18 @@ export const TOOL_RESOLVE_PATIENT: ChatToolDefinition = {
         type: 'string',
         description: 'Patient phone number. Leave empty if the patient has not provided it.',
       },
+      secondLastName: {
+        type: 'string',
+        description: 'Second surname, only if the patient gave it or the system asked for it (askFor). Empty string otherwise.',
+      },
+      birthday: {
+        type: 'string',
+        description: 'Birth date YYYY-MM-DD, only if the patient gave it or the system asked for it (askFor). Empty string otherwise.',
+      },
+      idDocumentNumber: {
+        type: 'string',
+        description: 'Identity document (DNI/NIE/passport), only if the patient gave it or the system asked for it (askFor). Empty string otherwise.',
+      },
       useInterlocutorPhone: {
         type: 'boolean',
         description: 'Set to true only when the patient explicitly says "a este numero", "mi numero" or "para mi".',
@@ -163,7 +177,7 @@ export const TOOL_RESOLVE_PATIENT: ChatToolDefinition = {
         description: 'Set to true only when the patient explicitly says the appointment is for themselves ("para mi").',
       },
     },
-    required: ['firstName', 'lastName', 'phone', 'isForInterlocutor', 'useInterlocutorPhone'],
+    required: ['firstName', 'lastName', 'phone', 'secondLastName', 'birthday', 'idDocumentNumber', 'isForInterlocutor', 'useInterlocutorPhone'],
   },
 };
 
@@ -173,8 +187,11 @@ export const TOOL_LOOKUP_PATIENT: ChatToolDefinition = {
   name: 'lookup_patient',
   strict: true,
   description:
-    'Look up patient information by phone number, first name, or last name. ' +
-    'Returns personal data and scheduled appointments. Use to identify the patient or review their history.',
+    'Look up a patient record by phone number, first name and/or last name (read-only: never creates). ' +
+    'Returns personal data and scheduled appointments. Use to identify the patient or review their history. ' +
+    'A partial name is enough: one given name and one surname as the interlocutor says them, without accents, with a nickname or a typo. The phone disambiguates. ' +
+    'ALWAYS call this before saying a record does not exist. ' +
+    'When it returns status "ambiguous" with askFor, ask the interlocutor EXACTLY for that datum and call again; NEVER list the names or data of the candidate records.',
   parameters: {
     type: 'object',
     additionalProperties: false,
@@ -189,10 +206,22 @@ export const TOOL_LOOKUP_PATIENT: ChatToolDefinition = {
       },
       lastName: {
         type: 'string',
-        description: 'Patient last name. Required. Send empty string if not known — the system will search by phone.',
+        description: 'Patient last name, first surname is enough. Required. Send empty string if not known — the system will search by phone.',
+      },
+      secondLastName: {
+        type: 'string',
+        description: 'Second surname, only if given or requested via askFor. Empty string otherwise.',
+      },
+      birthday: {
+        type: 'string',
+        description: 'Birth date YYYY-MM-DD, only if given or requested via askFor. Empty string otherwise.',
+      },
+      idDocumentNumber: {
+        type: 'string',
+        description: 'Identity document (DNI/NIE/passport), only if given or requested via askFor. Empty string otherwise.',
       },
     },
-    required: ['phone', 'firstName', 'lastName'],
+    required: ['phone', 'firstName', 'lastName', 'secondLastName', 'birthday', 'idDocumentNumber'],
   },
 };
 

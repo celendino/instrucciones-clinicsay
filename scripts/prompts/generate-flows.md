@@ -12,7 +12,7 @@
 Cada intent que requiere acción del bot DEBE tener al menos un flow:
 - `existing_appointment_confirmation` → flow de confirmación
 - `existing_appointment_cancellation` → flow de cancelación
-- `existing_appointment_inquiry` → flow de consulta (sin tools)
+- `existing_appointment_inquiry` → flow de consulta con `lookup_patient` (solo lectura; obligatoria por la regla S11)
 - `new_appointment_scheduling` → flow de agendamiento (modo dependiente)
 - `general_inquiry` → flow informativo con `query_knowledge_base` disponible como fallback semántico
 - `human_follow_up` → flow de tarea
@@ -289,8 +289,11 @@ S7b. Un flujo que CREA, MUEVE o DESTRUYE citas (usa `schedule_block`, `manage_sc
 
 S8. Un flujo cuyo intent es `existing_appointment_*` Y que usa una tool de escritura en citas DEBE declarar `"selection": { "requiredCapabilities": ["hasActiveAppointment"] }`. Sin esa puerta determinista, un "sí" desnudo puede activar el flow cuando el paciente no tiene ninguna cita, y el bot actúa sobre una cita inexistente.
 
+S9. Un flujo cuyo intent es `existing_appointment_inquiry` DEBE incluir `lookup_patient` (en `steps` o en `allowedTools`), tanto en full como en tasks-only (regla S11 del validador del backend). ASSOCIATED_PATIENTS solo cubre al titular del número de WhatsApp: si escribe otra persona, o el número de la ficha no coincide, un flujo sin herramientas deja al modelo sin nada con qué buscar y INVENTA «no encuentro tu ficha» (11-09-2026, Sede Principal - Murcia: la ficha existía). `lookup_patient` es solo lectura —nunca crea ni modifica—, así que siempre es segura en un flujo informativo.
+
 ## Checklist antes de entregar
 - [ ] Un flow por cada intent que requiere acción
+- [ ] El flow de `existing_appointment_inquiry` declara `lookup_patient` (S9 / S11 del backend)
 - [ ] En full mode: los flows de booking deben ejecutar `resolve_patient` antes de `schedule_block`, que requiere `hasResolvedPatient`; la posición de `resolve_patient` respecto a `check_availability` es configurable por el asesor. SIN required circulares: un step nunca requiere lo que establece su propia tool.
 - [ ] En tasks-only mode: NINGUNA scheduling tool (check_availability, schedule_block, etc.)
  - [ ] `responseTemplateKey` es opcional, denotativo y, si se usa, existe en `responseTemplates`

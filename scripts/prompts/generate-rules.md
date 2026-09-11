@@ -125,7 +125,7 @@ Operadores permitidos: `"equals"`, `"in"`, `"not_in"`, `"gt"`, `"lt"`, `"gte"`, 
     "description": "El paciente consulta información sobre citas que ya tiene reservadas, como horarios, fechas o tratamientos programados.",
     "action": "allow",
     "priority": 0,
-    "note": "El backend inyecta las citas del paciente en el system prompt (ASSOCIATED_PATIENTS). El bot responde sin llamar tools."
+    "note": "El backend inyecta las citas del paciente asociado al número en el system prompt (ASSOCIATED_PATIENTS). Si quien escribe da un nombre distinto o el número no coincide, el bot identifica la ficha con lookup_patient antes de responder; nunca afirma que no existe sin haberla buscado."
   },
   {
     "id": "confirm_existing_appointment",

@@ -466,13 +466,18 @@
         "steps": [
           {
             "step": 1,
-            "tools": [],
+            "tools": [
+              "lookup_patient"
+            ],
             "parallel": false,
             "required": [],
-            "note": "Responder con ASSOCIATED_PATIENTS."
+            "note": "Si quien escribe es el titular del número, responde con ASSOCIATED_PATIENTS. Si da un nombre distinto o el número no coincide, identifica su ficha con lookup_patient (nombre y apellido tal como los dice, y teléfono si lo dio) antes de responder; si devuelve ambiguous, pide solo el dato de askFor sin enumerar nombres. Nunca afirmes que no existe una ficha sin el resultado de la tool. Si no hay citas, indícalo y ofrece ayuda."
           }
         ],
-        "responseTemplateKey": "appointment_info"
+        "responseTemplateKey": "appointment_info",
+        "allowedTools": [
+          "lookup_patient"
+        ]
       },
       "human_follow_up": {
         "intent": "human_follow_up",

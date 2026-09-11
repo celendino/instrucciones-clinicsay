@@ -79,6 +79,14 @@ const APPOINTMENT_WRITING_TOOLS = [CONSTRUCTIVE_TOOL, DESTRUCTIVE_TOOL, BULK_DES
 const RESCHEDULE_INQUIRY_REQUIRED_TOOLS = ['resolve_reschedule_target', 'resolve_availability_query', 'check_availability'];
 const RESCHEDULE_PATIENT_TOOL = 'resolve_patient';
 
+/**
+ * Read-only identification tool an appointment INQUIRY must carry. The
+ * pre-loaded ASSOCIATED_PATIENTS covers only the owner of the WhatsApp number;
+ * when someone else writes, or the number on file differs, this is the only
+ * way the bot can find the record instead of inventing that it does not exist.
+ */
+const INQUIRY_IDENTIFICATION_TOOL = 'lookup_patient';
+
 const RESCHEDULE_INQUIRY_FORBIDDEN_TOOLS = [
   'cancel_for_rescheduling',
   CONSTRUCTIVE_TOOL,
@@ -154,7 +162,11 @@ export const FLOW_SAFETY_PROMPT_RULES =
   `patient gives a day or a time the bot can only PROMISE to look at the schedule — which is rejected and replaced by a canonical ` +
   `message, advancing nothing, so the patient insists and the bot repeats itself forever. This is CONSULTING, not modifying: the ` +
   `slots it shows are informational and do not authorize booking, and the tools that modify the appointment stay forbidden here. ` +
-  `In tasks-only mode this flow declares no tools and the rule does not apply.\n`;
+  `In tasks-only mode this flow declares no tools and the rule does not apply.\n` +
+  `S11. A flow whose intent is "existing_appointment_inquiry" MUST include "${INQUIRY_IDENTIFICATION_TOOL}" (in a step or in "allowedTools"), in full AND tasks-only mode. ` +
+  `ASSOCIATED_PATIENTS only covers the owner of the WhatsApp number: when someone else writes, or the number on file differs, a flow ` +
+  `without tools leaves the model nothing to search with and it INVENTS "no encuentro tu ficha" (11-09-2026, Sede Principal - Murcia: the record existed). ` +
+  `"${INQUIRY_IDENTIFICATION_TOOL}" is read-only — it never creates or modifies — so it is always safe in an informational flow.\n`;
 
 /** Shared semantic contract used by all builder prompts for appointment flows. */
 export const RESCHEDULING_SEMANTIC_PROMPT_RULES =
@@ -592,6 +604,37 @@ function validateRescheduleInquiryCanConsultAvailability(
 }
 
 /**
+ * La consulta de citas DEBE poder identificar al paciente.
+ *
+ * ASSOCIATED_PATIENTS solo trae al titular del número de WhatsApp. Si escribe
+ * otra persona, o el número de la ficha no coincide con el del contacto, un
+ * flujo sin herramientas deja al modelo sin nada con qué buscar, y el modelo
+ * INVENTA: «no encuentro una ficha con esos datos», «con ese número tampoco
+ * aparece». Ocurrió el 11-09-2026 (Sede Principal - Murcia, lead 23790871): la
+ * ficha existía, el paciente dio nombre, teléfono y nombre completo, y el bot
+ * lo negó tres veces con cero llamadas a herramientas.
+ *
+ * `lookup_patient` es solo lectura (nunca crea ni modifica), así que es
+ * siempre seguro en un flujo informativo. Se exige en full y en tasks-only:
+ * identificar al paciente hace falta en los dos modos.
+ */
+function validateAppointmentInquiryCanIdentifyPatient(flowName: string, flow: ToolFlow, errors: string[]): void {
+  if (flow.intent !== 'existing_appointment_inquiry') return;
+  if (flowUsesTool(flow, INQUIRY_IDENTIFICATION_TOOL)) return;
+
+  errors.push(
+    `${header(flowName, flow)}: es una consulta de citas existentes pero no puede identificar al paciente ` +
+      `(falta ${INQUIRY_IDENTIFICATION_TOOL}). ` +
+      `POR QUÉ ES PELIGROSO: ASSOCIATED_PATIENTS solo cubre al titular del número de WhatsApp; si escribe otra ` +
+      `persona o el número de la ficha no coincide, el flujo se queda sin herramientas y el modelo INVENTA que la ` +
+      `ficha no existe («no encuentro una ficha con esos datos»), como el 11-09-2026 en Sede Principal - Murcia, ` +
+      `donde la ficha existía. ` +
+      `CÓMO SE CORRIGE: añade un paso con "tools": ["${INQUIRY_IDENTIFICATION_TOOL}"] o inclúyelo en "allowedTools". ` +
+      `Es solo lectura: nunca crea ni modifica pacientes ni citas.`,
+  );
+}
+
+/**
  * Every full rescheduling flow must expose patient resolution before resolving
  * the appointment. The runtime may omit the call when the DEFAULT patient is
  * unambiguous, but a third party or an ambiguous patient must be resolvable.
@@ -837,6 +880,7 @@ export function validateFlowSafety(
     validateActiveAppointmentGate(flowName, flow, errors);
     validateRescheduleInquiry(flowName, flow, errors);
     validateRescheduleInquiryCanConsultAvailability(flowName, flow, mode, errors);
+    validateAppointmentInquiryCanIdentifyPatient(flowName, flow, errors);
     validateFullReschedulingPatientResolution(flowName, flow, mode, errors);
     validateReschedulingSurvivesItsOwnCancellation(flowName, flow, errors);
     validateFullReschedulingContract(flowName, flow, mode, errors);

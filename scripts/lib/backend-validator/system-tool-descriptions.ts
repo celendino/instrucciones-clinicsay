@@ -32,8 +32,11 @@ export const TASKS_ONLY_OVERRIDES: Record<string, string> = {
   lookup_patient:
     'USAR para buscar paciente por telefono, nombre o apellido. ' +
     'Busqueda pura: NUNCA crea pacientes. ' +
+    'Basta un nombre y un apellido tal como los dice el interlocutor (sin tildes, con apodo o con un error de tecleo); el telefono desempata. ' +
+    'LLAMALA SIEMPRE antes de afirmar que una ficha no existe. ' +
     'Retorna datos personales y citas programadas. ' +
-    'La respuesta incluye isNew: true cuando no encuentra pacientes y isNew: false cuando encuentra uno o mas. ' +
+    'La respuesta incluye isNew: true cuando no encuentra pacientes, isNew: false cuando identifica uno, y status "ambiguous" con askFor cuando varias fichas podrian ser la persona: ' +
+    'entonces pide EXACTAMENTE el dato de askFor y vuelve a llamar; NUNCA enumeres nombres ni datos de las fichas candidatas. ' +
     'Usar al inicio de la conversacion para ver si es paciente existente.',
 
   query_knowledge_base:
@@ -91,7 +94,9 @@ export const FULL_MODE_ENHANCEMENTS: Record<string, string> = {
     'NUNCA uses CALLER_PHONE, ASSOCIATED_PATIENTS ni datos del contacto de Kommo como datos confirmados sin autorizacion del interlocutor. ' +
     'El telefono debe ser proporcionado explicitamente por el interlocutor; solo usa el telefono del contacto si el interlocutor indico explicitamente que es el numero desde el que escribe y useInterlocutorPhone es true. ' +
     'Si falta alguno de estos datos, el sistema retorna status "needs_info" y pide los datos faltantes. ' +
-    'El sistema busca por telefono + nombre + apellido; si no encuentra ningun paciente, lo crea automaticamente con los datos proporcionados. ' +
+    'El sistema busca por telefono + nombre + apellido con tolerancia: basta un nombre y un apellido tal como los dice el interlocutor (sin tildes, con apodo o con un error de tecleo). ' +
+    'Si no encuentra ningun paciente, lo crea automaticamente con los datos proporcionados. ' +
+    'Si devuelve status "ambiguous", pide EXACTAMENTE el dato indicado en askFor (telefono, segundo apellido, fecha de nacimiento o DNI) y vuelve a llamar con todos los datos acumulados; NUNCA enumeres nombres ni datos de las fichas candidatas. ' +
     'El campo isForInterlocutor solo sirve para auditoria/logging; NO altera la busqueda ni la creacion.',
 
   resolve_treatment:
@@ -113,9 +118,12 @@ export const FULL_MODE_ENHANCEMENTS: Record<string, string> = {
     'Buscar paciente por numero de telefono, nombre o apellido. ' +
     'Busqueda pura: NUNCA crea pacientes. ' +
     'USAR para identificar al paciente o revisar su historial de citas. ' +
+    'Basta un nombre y un apellido tal como los dice el interlocutor (sin tildes, con apodo o con un error de tecleo); NO hace falta el nombre completo de la ficha. El telefono desempata. ' +
+    'LLAMALA SIEMPRE antes de afirmar que una ficha no existe: si quien escribe da un nombre distinto al de ASSOCIATED_PATIENTS, busca su ficha con esta tool antes de responder. ' +
     'REGLA DE ORO: Solo busca con datos que el INTERLOCUTOR haya proporcionado EXPLICITAMENTE en esta conversacion. ' +
     'NUNCA uses CALLER_PHONE, ASSOCIATED_PATIENTS ni datos del contacto de Kommo como criterio de busqueda automatico. ' +
-    'La respuesta incluye isNew: true cuando no encuentra pacientes y isNew: false cuando encuentra uno o mas. ' +
+    'La respuesta incluye isNew: true cuando no encuentra pacientes, isNew: false cuando identifica uno, y status "ambiguous" con askFor cuando varias fichas podrian ser la persona: ' +
+    'entonces pide EXACTAMENTE el dato de askFor (telefono, segundo apellido, fecha de nacimiento o DNI) y vuelve a llamar con todo lo acumulado; NUNCA enumeres nombres ni datos de las fichas candidatas. ' +
     'Usar al inicio de la conversacion para ver si es paciente existente. ' +
     'Si no hay telefono, busca por nombre+apellido. Retorna datos personales y citas programadas.',
 

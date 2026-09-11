@@ -286,7 +286,7 @@ The prefix is not cosmetic: `existing_appointment_*` is what subjects a flow to 
 | `existing_appointment_confirmation` | Patient confirms attendance to an already-booked appointment (often replying to a reminder). |
 | `existing_appointment_cancellation` | Patient explicitly cancels an existing appointment. |
 | `existing_appointment_cancellation_inquiry` | Patient asks about cancelling, without ordering the cancellation. |
-| `existing_appointment_inquiry` | Patient asks about appointments they already have (times, dates, treatments). Answerable from context. |
+| `existing_appointment_inquiry` | Patient asks about appointments they already have (times, dates, treatments). Answerable from context for the owner of the WhatsApp number; the flow MUST include `lookup_patient` (S11) so the bot can find the record when someone else writes or the number differs. |
 | `existing_appointment_keep` | Patient wants to keep the appointment as it is and drop any proposed change. |
 | `existing_appointment_delay_notice` | Patient warns they will arrive late to a confirmed appointment. |
 
@@ -365,6 +365,7 @@ When both `manage_schedule_block_status` and `create_task` are configured in one
 - A flow whose intent is `existing_appointment_*` and that uses `manage_schedule_block_status` or `schedule_block` must declare `selection.requiredCapabilities: ["hasActiveAppointment"]`. Informational flows (no tools) do not need it.
 - `responseTemplateKey`, when present, must reference the root registry; its absence is valid.
 - The `steps` array must be written in ascending `step` order.
+- A flow whose intent is `existing_appointment_inquiry` MUST include `lookup_patient` (in a step or in `allowedTools`), in full AND tasks-only mode. ASSOCIATED_PATIENTS only covers the owner of the WhatsApp number; without the tool the model invents «no encuentro tu ficha» when someone else writes or the number on file differs (11-09-2026, Sede Principal - Murcia: the record existed). `lookup_patient` is read-only, so it is always safe in an informational flow.
 
 There are **no silent fallbacks**: any of these produces an explicit, blocking error explaining what is wrong, why it is dangerous and how to fix it. A JSON that fails validation is not loaded at runtime.
 

@@ -77,6 +77,12 @@ export type CreateConversationParams = {
   systemPrompt: string;
   /** The user's message. */
   userMessage: string;
+  /**
+   * Who is speaking in `userMessage`. `developer` is the orchestrator talking
+   * to the model about the turn (a correction with server facts); it must not
+   * be attributed to the patient.
+   */
+  inputRole?: 'user' | 'developer';
   /** Tools available to the model. */
   tools: ChatToolDefinition[];
   /** Previous response ID for conversation continuity (optional). */

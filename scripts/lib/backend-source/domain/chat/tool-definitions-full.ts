@@ -322,7 +322,9 @@ export const TOOL_RESOLVE_PATIENT: ChatToolDefinition = {
     'NUNCA uses CALLER_PHONE, ASSOCIATED_PATIENTS ni datos del contacto de Kommo como datos confirmados sin autorizacion del interlocutor. ' +
     'El telefono debe ser el que el interlocutor haya proporcionado explicitamente; solo usa el telefono del contacto si el interlocutor indico explicitamente que es el numero desde el que escribe y useInterlocutorPhone es true. ' +
     'Si falta alguno de estos datos, el sistema retorna status "needs_info" y pide los datos faltantes. ' +
-    'El sistema busca por telefono + nombre + apellido; si no encuentra ningun paciente, lo crea automaticamente con los datos proporcionados. ' +
+    'El sistema busca por telefono + nombre + apellido con tolerancia: basta un nombre y un apellido tal como los dice el interlocutor (sin tildes, con apodo o con un error de tecleo); NO hace falta el nombre completo de la ficha. ' +
+    'Si no encuentra ningun paciente, lo crea automaticamente con los datos proporcionados. ' +
+    'Si devuelve status "ambiguous", pide EXACTAMENTE el dato indicado en askFor (telefono, segundo apellido, fecha de nacimiento o DNI) y vuelve a llamar con todos los datos acumulados; NUNCA enumeres nombres ni datos de las fichas candidatas. ' +
     'El campo isForInterlocutor solo sirve para auditoria/logging; NO altera la busqueda ni la creacion.',
   parameters: {
     type: 'object',
@@ -334,11 +336,23 @@ export const TOOL_RESOLVE_PATIENT: ChatToolDefinition = {
       },
       lastName: {
         type: 'string',
-        description: 'Patient last name. Required. Send empty string if not yet known — the system will ask.',
+        description: 'Patient last name (first surname is enough). Required. Send empty string if not yet known — the system will ask.',
       },
       phone: {
         type: 'string',
         description: 'Patient phone number (with or without country code). Required and never substituted from the Kommo contact.',
+      },
+      secondLastName: {
+        type: 'string',
+        description: 'Second surname, only if the interlocutor gave it or the system asked for it (askFor). Empty string otherwise.',
+      },
+      birthday: {
+        type: 'string',
+        description: 'Birth date YYYY-MM-DD, only if the interlocutor gave it or the system asked for it (askFor). Empty string otherwise.',
+      },
+      idDocumentNumber: {
+        type: 'string',
+        description: 'Identity document (DNI/NIE/passport), only if the interlocutor gave it or the system asked for it (askFor). Empty string otherwise.',
       },
       isForInterlocutor: {
         type: 'boolean',
@@ -349,7 +363,7 @@ export const TOOL_RESOLVE_PATIENT: ChatToolDefinition = {
         description: 'Set true solo si el interlocutor indico explicitamente que se use el telefono del contacto; nunca lo actives automaticamente.',
       },
     },
-    required: ['firstName', 'lastName', 'phone', 'isForInterlocutor', 'useInterlocutorPhone'],
+    required: ['firstName', 'lastName', 'phone', 'secondLastName', 'birthday', 'idDocumentNumber', 'isForInterlocutor', 'useInterlocutorPhone'],
   },
 };
 
@@ -457,27 +471,42 @@ export const TOOL_LOOKUP_PATIENT: ChatToolDefinition = {
   name: 'lookup_patient',
   strict: true,
   description:
-    'Look up patient information by phone number, first name, or last name. ' +
+    'Look up a patient record by phone number, first name and/or last name (read-only: never creates). ' +
     'Returns personal data and scheduled appointments. Use to identify the patient or review their history. ' +
-    'The response includes isNew: true when no patients are found, and isNew: false when one or more patients are found.',
+    'A partial name is enough: one given name and one surname as the interlocutor says them, without accents, with a nickname or a typo; the full name in the record is NOT required. The phone disambiguates. ' +
+    'ALWAYS call this before saying a record does not exist. ' +
+    'The response includes isNew: true when no patients are found, isNew: false when one is identified, and status "ambiguous" with askFor when several records could be the person: ' +
+    'then ask the interlocutor EXACTLY for the datum in askFor (phone, second surname, birth date or ID document) and call again with everything gathered; NEVER list the names or data of the candidate records.',
   parameters: {
     type: 'object',
     additionalProperties: false,
     properties: {
       phone: {
         type: 'string',
-        description: 'Phone number to search (optional if firstName/lastName provided).',
+        description: 'Phone number to search (optional if firstName/lastName provided). Empty string if not given.',
       },
       firstName: {
         type: 'string',
-        description: 'Patient first name (optional if phone provided).',
+        description: 'Patient first name (optional if phone provided). Empty string if not given.',
       },
       lastName: {
         type: 'string',
-        description: 'Patient last name (optional if phone provided).',
+        description: 'Patient last name, first surname is enough (optional if phone provided). Empty string if not given.',
+      },
+      secondLastName: {
+        type: 'string',
+        description: 'Second surname, only if given or requested via askFor. Empty string otherwise.',
+      },
+      birthday: {
+        type: 'string',
+        description: 'Birth date YYYY-MM-DD, only if given or requested via askFor. Empty string otherwise.',
+      },
+      idDocumentNumber: {
+        type: 'string',
+        description: 'Identity document (DNI/NIE/passport), only if given or requested via askFor. Empty string otherwise.',
       },
     },
-    required: ['phone', 'firstName', 'lastName'],
+    required: ['phone', 'firstName', 'lastName', 'secondLastName', 'birthday', 'idDocumentNumber'],
   },
 };
 

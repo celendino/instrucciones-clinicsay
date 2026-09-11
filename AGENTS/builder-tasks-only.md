@@ -97,8 +97,8 @@ Las 7 tools disponibles en este modo son:
 - `create_task` — Crear tarea administrativa para seguimiento humano. Tool principal cuando la solicitud requiere intervención humana.
 - `manage_schedule_block_status` — Gestionar UNA cita existente (confirmar, cancelar, marcar en camino).
 - `manage_all_schedule_blocks_for_date` — Gestionar TODAS las citas de un paciente en una fecha específica.
-- `resolve_patient` — Identificar o crear al paciente ANTES de una tarea de agendamiento, con los datos que el interlocutor haya dado explícitamente. No uses CALLER_PHONE ni los datos del contacto de Kommo como confirmados sin su autorización.
-- `lookup_patient` — Buscar paciente por teléfono, nombre o apellido. Solo lectura; no crea pacientes.
+- `resolve_patient` — Identificar o crear al paciente ANTES de una tarea de agendamiento, con los datos que el interlocutor haya dado explícitamente. No uses CALLER_PHONE ni los datos del contacto de Kommo como confirmados sin su autorización. Tolera nombre parcial (un nombre y un apellido tal como los dice, sin tildes, con apodo o error de tecleo) y el teléfono desempata; ante homónimos devuelve `ambiguous` con `askFor` (teléfono → segundo apellido → fecha de nacimiento → DNI) y el bot pide solo ese dato, sin enumerar nombres de terceros. Acepta `secondLastName`, `birthday` e `idDocumentNumber` opcionales.
+- `lookup_patient` — Buscar la ficha de un paciente por teléfono, nombre y/o apellido. Solo lectura; no crea pacientes. Basta un nombre y un apellido tal como los dice el interlocutor; el teléfono desempata. Si varias fichas encajan devuelve `ambiguous` con `askFor` y el bot pide solo ese dato, sin revelar nombres. OBLIGATORIA en el flujo `existing_appointment_inquiry` (regla S11 del validador): ASSOCIATED_PATIENTS solo cubre al titular del número de WhatsApp.
 - `query_protocol` — Consultar contenido de un protocolo por ID.
 - `query_knowledge_base` — Buscar semánticamente en protocols, FAQ, responseTemplates y rules cuando la respuesta no esté ya en contexto.
 
@@ -620,7 +620,7 @@ Los resultados operativos (`appointment_created`, `appointment_cancelled`, `appo
 Usa `allowedTools` para declarar explícitamente qué tools están disponibles en cada flow. La lista debe incluir exactamente las tools que el flow necesita:
 - `confirm_existing_appointment`: `allowedTools: ["manage_schedule_block_status"]` — el flow solo necesita confirmar la cita.
 - `cancel_existing_appointment`: `allowedTools: ["manage_schedule_block_status", "manage_all_schedule_blocks_for_date"]` — gestión de citas; añade `create_task` solo si la clínica requiere tarea de seguimiento.
-- `existing_appointment_inquiry`: `allowedTools: []` — el bot responde desde el contexto, no usa tools.
+- `existing_appointment_inquiry`: `allowedTools: ["lookup_patient"]` — responde desde ASSOCIATED_PATIENTS cuando escribe el titular del número, y busca la ficha con `lookup_patient` cuando escribe otra persona o el número no coincide. Sin `lookup_patient` el validador rechaza el JSON (S11).
 - `new_appointment_scheduling`: `allowedTools` refleja la elección del asesor; puede incluir `create_task` o ser `[]` si el flow es informativo.
 - `product_inquiry` / `shipping_request`: `allowedTools: ["create_task"]` — el flow recopila datos y crea una tarea.
 
@@ -686,23 +686,18 @@ Marca la cita como confirmada. Es una acción directa con `manage_schedule_block
 }
 ```
 
-#### Flow: `existing_appointment_inquiry` (sin tools)
+#### Flow: `existing_appointment_inquiry` (con `lookup_patient`)
 
-La información ya está en el contexto; el bot responde directamente sin usar tools.
+ASSOCIATED_PATIENTS solo trae al titular del número de WhatsApp. Si escribe otra persona, o el número de la ficha no coincide con el del contacto, el bot necesita `lookup_patient` para encontrar la ficha; sin ella INVENTA «no encuentro una ficha con esos datos» (incidente 11-09-2026, Sede Principal - Murcia: la ficha existía). El validador (regla S11) rechaza el JSON si el flujo no la declara. Es solo lectura: nunca crea ni modifica.
 
 ```json
 {
   "intent": "existing_appointment_inquiry",
   "description": "El paciente consulta información sobre citas que ya tiene reservadas, como horarios, fechas o tratamientos.",
   "steps": [
-    {
-      "step": 1,
-      "tools": [],
-      "parallel": false,
-      "note": "Usa el contexto ASSOCIATED_PATIENTS para responder. Si no hay citas, indica que no hay citas programadas y ofrece ayuda."
-    }
+    { "step": 1, "tools": ["lookup_patient"], "parallel": false, "required": [], "note": "Si quien escribe es el titular del número, responde con ASSOCIATED_PATIENTS. Si da un nombre distinto o el número no coincide, identifica su ficha con lookup_patient (nombre y apellido tal como los dice, y teléfono si lo dio) antes de responder; si devuelve ambiguous, pide solo el dato de askFor sin enumerar nombres. Nunca afirmes que no existe una ficha sin el resultado de la tool. Si no hay citas, indícalo y ofrece ayuda." }
   ],
-  "allowedTools": []
+  "allowedTools": ["lookup_patient"]
 }
 ```
 
@@ -750,7 +745,7 @@ Deben existir intents y rules para: `existing_appointment_confirmation`, `existi
 #### Flows críticos
 - Flow de `existing_appointment_confirmation`: existe y usa únicamente `manage_schedule_block_status`.
 - Flow de `existing_appointment_cancellation`: existe con `manage_schedule_block_status`.
-- Flow de `existing_appointment_inquiry`: existe con `tools: []`; la respuesta puede usar `patientOutcome` o IA, y opcionalmente `responseTemplateKey`.
+- Flow de `existing_appointment_inquiry`: existe y declara `lookup_patient` (en `steps` o `allowedTools`; regla S11, bloqueante también en tasks-only); la respuesta puede usar `patientOutcome` o IA, y opcionalmente `responseTemplateKey`.
 - Flow de `new_appointment_scheduling`: existe, no usa scheduling o disponibilidad y puede ser informativo o incluir `create_task`.
 - Flow de `farewell`: existe con `allowsSilence: true`.
 - Flow `general_inquiry` debe tener `query_knowledge_base` en `allowedTools` o steps.
@@ -762,7 +757,7 @@ Deben existir intents y rules para: `existing_appointment_confirmation`, `existi
 - [ ] `rules` tiene al menos 1 rule por intent (mínimo 7 rules para los intents críticos).
 - [ ] Flow de confirmación usa únicamente `manage_schedule_block_status`.
 - [ ] Flow de cancelación usa `manage_schedule_block_status` (sin `create_task` forzado en step 2).
-- [ ] Flow de `existing_appointment_inquiry` tiene `tools: []`; `responseTemplateKey` es opcional.
+- [ ] Flow de `existing_appointment_inquiry` declara `lookup_patient` (S11); `responseTemplateKey` es opcional.
 - [ ] Flow de `new_appointment_scheduling` no usa scheduling o disponibilidad; `create_task` no es obligatorio.
 - [ ] Flow de `farewell` tiene `allowsSilence: true`.
 - [ ] `serviceCatalog.treatments` tiene al menos 1 tratamiento con `name`.

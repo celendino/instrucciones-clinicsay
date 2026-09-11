@@ -167,7 +167,10 @@ function buildDefaultFaq(mode: 'full' | 'tasks-only'): FaqEntry[] {
     },
     {
       question: '¿Puedo cambiar mi cita?',
-      answer: 'Gracias por avisarnos con antelacion. Voy a gestionar el cambio de tu cita.',
+      // Una respuesta modelo no puede prometer una accion futura: el bot la copia
+      // literalmente y la promesa se entrega aunque el turno no haya movido nada
+      // (10-09-2026, lead 23776441). Pregunta, no promete.
+      answer: 'Gracias por avisarnos con antelacion. Dime que dia y franja te vienen bien y miro la agenda.',
     },
     {
       question: '¿Cual es el telefono?',
@@ -689,7 +692,7 @@ function buildDefaultRules(mode: 'full' | 'tasks-only'): BusinessRule[] {
       intent: 'existing_appointment_inquiry',
       description: 'El paciente consulta informacion sobre citas que ya tiene reservadas, como horarios, fechas o tratamientos.',
       action: 'allow',
-      note: 'El backend inyecta las citas del paciente en el system prompt. El bot responde sin llamar tools.',
+      note: 'El backend inyecta las citas del paciente asociado al numero en el system prompt. Si quien escribe da un nombre distinto o el numero no coincide, el bot identifica la ficha con lookup_patient antes de responder; nunca afirma que no existe sin haberla buscado.',
     },
     {
       id: 'confirm_existing_appointment',

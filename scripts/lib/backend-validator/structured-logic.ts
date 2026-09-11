@@ -453,7 +453,7 @@ export const BASELINE_INTENTS: IntentCatalog = {
     examples: ['cancela mi cita', 'no puedo ir mañana', 'anula la sesion'],
   },
   existing_appointment_inquiry: {
-    description: 'El paciente pregunta por citas que ya tiene reservadas (horarios, fechas). La información ya está en el contexto.',
+    description: 'El paciente pregunta por citas que ya tiene reservadas (horarios, fechas). Las del titular del número están en el contexto; para otra persona o un número distinto el bot busca la ficha con lookup_patient.',
     examples: ['¿cuándo es mi cita?'],
   },
   new_appointment_scheduling: {
