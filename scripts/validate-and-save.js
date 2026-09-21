@@ -126,10 +126,21 @@ function validateSchema(data, errors) {
         } else {
           seenPolicyTreatmentIds.add(policy.treatmentId);
         }
+        const hasMinutes = policy.allowedStartMinutes !== undefined && policy.allowedStartMinutes !== null;
+        const hasStrategy = policy.slotMinuteStrategy !== undefined && policy.slotMinuteStrategy !== null;
+        if (hasMinutes && hasStrategy) {
+          errors.push({ category: 'schema', message: `globalSchedulingPolicies[${index}] cannot define both allowedStartMinutes and slotMinuteStrategy` });
+        }
+        if (policy.treatmentId === null && !hasMinutes && !hasStrategy) {
+          errors.push({ category: 'schema', message: `globalSchedulingPolicies[${index}] must define exactly one of allowedStartMinutes or slotMinuteStrategy` });
+        }
+        if (hasStrategy && policy.slotMinuteStrategy !== 'fixed' && policy.slotMinuteStrategy !== 'anchored') {
+          errors.push({ category: 'schema', message: `globalSchedulingPolicies[${index}].slotMinuteStrategy must be fixed or anchored` });
+        }
         const minutes = policy.allowedStartMinutes;
-        if (!Array.isArray(minutes) || minutes.length === 0) {
+        if (hasMinutes && (!Array.isArray(minutes) || minutes.length === 0)) {
           errors.push({ category: 'schema', message: `globalSchedulingPolicies[${index}].allowedStartMinutes must be a non-empty array` });
-        } else {
+        } else if (Array.isArray(minutes)) {
           const seen = new Set();
           for (const minute of minutes) {
             if (!Number.isInteger(minute) || minute < 0 || minute > 59 || seen.has(minute)) {

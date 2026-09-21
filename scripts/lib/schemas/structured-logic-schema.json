@@ -21,7 +21,10 @@
             ]
           },
           "allowedStartMinutes": {
-            "type": "array",
+            "type": [
+              "array",
+              "null"
+            ],
             "minItems": 1,
             "uniqueItems": true,
             "items": {
@@ -29,13 +32,146 @@
               "minimum": 0,
               "maximum": 59
             }
+          },
+          "slotMinuteStrategy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "fixed",
+              "anchored"
+            ]
           }
         },
         "required": [
-          "treatmentId",
-          "allowedStartMinutes"
+          "treatmentId"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "treatmentId": {
+                "type": "null"
+              },
+              "allowedStartMinutes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 59
+                }
+              },
+              "slotMinuteStrategy": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "treatmentId",
+              "allowedStartMinutes",
+              "slotMinuteStrategy"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "treatmentId": {
+                "type": "null"
+              },
+              "allowedStartMinutes": {
+                "type": "null"
+              },
+              "slotMinuteStrategy": {
+                "type": "string",
+                "enum": [
+                  "fixed",
+                  "anchored"
+                ]
+              }
+            },
+            "required": [
+              "treatmentId",
+              "allowedStartMinutes",
+              "slotMinuteStrategy"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "treatmentId": {
+                "type": "string"
+              },
+              "allowedStartMinutes": {
+                "type": "null"
+              },
+              "slotMinuteStrategy": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "treatmentId",
+              "allowedStartMinutes",
+              "slotMinuteStrategy"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "treatmentId": {
+                "type": "string"
+              },
+              "allowedStartMinutes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 59
+                }
+              },
+              "slotMinuteStrategy": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "treatmentId",
+              "allowedStartMinutes",
+              "slotMinuteStrategy"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "treatmentId": {
+                "type": "string"
+              },
+              "allowedStartMinutes": {
+                "type": "null"
+              },
+              "slotMinuteStrategy": {
+                "type": "string",
+                "enum": [
+                  "fixed",
+                  "anchored"
+                ]
+              }
+            },
+            "required": [
+              "treatmentId",
+              "allowedStartMinutes",
+              "slotMinuteStrategy"
+            ],
+            "additionalProperties": false
+          }
+        ]
       }
     },
     "capabilities": {
@@ -157,7 +293,6 @@
                         "type": "string",
                         "enum": [
                           "resolve_availability_query",
-                          "resolve_reschedule_target",
                           "check_availability",
                           "schedule_block",
                           "cancel_for_rescheduling",
@@ -165,6 +300,7 @@
                           "manage_all_schedule_blocks_for_date",
                           "create_task",
                           "resolve_patient",
+                          "resolve_reschedule_target",
                           "resolve_professional",
                           "resolve_treatment",
                           "lookup_patient",
@@ -213,7 +349,6 @@
                   "type": "string",
                   "enum": [
                     "resolve_availability_query",
-                    "resolve_reschedule_target",
                     "check_availability",
                     "schedule_block",
                     "cancel_for_rescheduling",
@@ -221,6 +356,7 @@
                     "manage_all_schedule_blocks_for_date",
                     "create_task",
                     "resolve_patient",
+                    "resolve_reschedule_target",
                     "resolve_professional",
                     "resolve_treatment",
                     "lookup_patient",
@@ -888,7 +1024,7 @@
         "string",
         "null"
       ],
-      "description": "Prosa libre con las indicaciones de la clínica para IDENTIFICAR el tratamiento correcto que corresponde a lo que pide el paciente. Se inyecta en el prompt de resolve_treatment junto al catálogo real. Usa los NOMBRES de los tratamientos tal cual están en el catálogo, nunca IDs. Ejemplo: \"si el paciente es nuevo y pide un tratamiento concreto, lo recomendable es una cita de valoración; usa únicamente la opción de valoración que figure en serviceCatalog. No confundir con treatmentPolicyHints, que trata de políticas de scheduling."
+      "description": "Prosa libre con las indicaciones de la clínica para IDENTIFICAR el tratamiento correcto que corresponde a lo que pide el paciente. Se inyecta en el prompt del orquestador, no en la llamada interna de resolve_treatment. junto al catálogo real. Usa los NOMBRES de los tratamientos tal cual están en el catálogo, nunca IDs. Ejemplo: \"si el paciente es nuevo y pide un tratamiento concreto, lo recomendable es una cita de valoración; usa únicamente la opción de valoración que figure en serviceCatalog. No confundir con treatmentPolicyHints, que trata de políticas de scheduling."
     },
     "treatmentPolicyHints": {
       "type": "array",

@@ -315,7 +315,9 @@ export type GlobalSchedulingPolicy = {
   /** Treatment identifier, or null for the clinic-wide policy. */
   treatmentId: string | null;
   /** Allowed appointment start minutes within an hour. */
-  allowedStartMinutes: number[];
+  allowedStartMinutes?: number[];
+  /** Minute grid strategy when explicit minutes are not configured. */
+  slotMinuteStrategy?: 'fixed' | 'anchored';
 };
 
 export type SystemPromptInstructions = {

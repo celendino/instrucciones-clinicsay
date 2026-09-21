@@ -424,75 +424,28 @@ En `tasks-only`, `create_task` es opcional. El modo limita scheduling y disponib
 
 ---
 
-## 🔄 Sincronización con el backend (mantenimiento)
+## 🔄 Mantenimiento del validador (solo administrador)
 
-Este repo es **independiente**: incluye el código del módulo del chatbot del backend como **context codebase** para que los agentes puedan leerlo y diagnosticar leads.
+Este repo es **independiente**: incluye una **réplica funcional** del validador del backend en `scripts/lib/backend-validator/`, que usan los scripts de validación (`validate-and-save.js`, `run-validation.ts`).
 
-### Dos copias del backend en este repo
+**Regla clave:** Solo el administrador del sistema actualiza `scripts/lib/backend-validator/`, `_templates/` y `structured-logic-standards.md`, editándolos manualmente cuando el backend cambie. Los asesores no tocan estas carpetas. No existe sincronización automática con el backend.
 
-| Carpeta | Propósito | Quién la usa |
-|---|---|---|
-| `scripts/lib/backend-source/` | **Context codebase** — mirror exacto del backend para que la IA lea el código real cuando investiga un lead con comportamiento inesperado | Los agentes (la IA) |
-| `scripts/lib/backend-validator/` | **Réplica funcional** — versión adaptada que usan los scripts de validación (`validate-and-save.js`, `run-validation.ts`) | Los scripts de validación |
-
-**Regla clave:** Solo el administrador del sistema actualiza el código importado del backend. Los asesores no ejecutan `sync-backend.sh` ni tocan estas carpetas.
-
-### Diagnóstico de leads con backend-source
-
-Cuando un lead presenta un comportamiento anómalo, el agente puede leer el código del backend en `scripts/lib/backend-source/` para compararlo con el JSON de producción de la clínica y determinar:
-
-- ¿El problema está en el **JSON de la clínica** (error de configuración)?
-- ¿El problema está en el **código del backend** (bug del sistema)?
-
-Esto funciona porque `backend-source/` contiene la lógica real que el backend ejecuta en producción: validadores, tool policies, intents canónicos, schemas.
-
-### Script automático de sincronización
-
-```bash
-# Comparar resumidamente (default)
-bash scripts/sync-backend.sh
-
-# Ver diffs detallados de todos los archivos diferentes
-bash scripts/sync-backend.sh --diff
-
-# Aplicar cambios del backend a la réplica local (interactivo, pide confirmación)
-bash scripts/sync-backend.sh --apply
-
-# Solo listar qué se importaría, sin copiar
-bash scripts/sync-backend.sh --list
-```
-
-**Qué hace el script:**
-1. Detecta automáticamente el backend en rutas comunes (`/root/clinicsay-backend`, `../clinicsay-backend`, `~/clinicsay-backend`)
-2. Importa 22 archivos relevantes a `scripts/lib/backend-source/` (mirror de solo lectura)
-3. Compara cada archivo con la réplica funcional en `scripts/lib/backend-validator/`
-4. Muestra estado: ✅ IGUAL | 🔴 DIFERENTE | 🆕 NUEVO
-5. En modo `--diff`: muestra el diff completo (`diff -u`) de cada archivo
-6. En modo `--apply`: copia los archivos diferentes tras confirmación del usuario
-
-### Artefactos que se sincronizan
-
-| Artefacto | Fuente canónica en backend | Destino en repo |
-|---|---|---|
-| Validador (`*.ts`, `validators/`, `advisory/`) | `src/domain/chatbot-instruction-builder/` | `scripts/lib/backend-validator/` |
-| Tool definitions | `src/domain/chat/tool-definitions-*.ts` | `scripts/lib/backend-validator/` |
-| Tool call policy | `src/application/chat/use-cases/RunToolCycle/tool-call-policy.ts` | `scripts/lib/backend-validator/` |
-| Intents canónicos | `src/domain/chat/canonical-intents.ts` | `scripts/lib/backend-validator/` |
-
-**Nota sobre imports:** La réplica local usa imports relativos simplificados (sin las rutas de backend). El script detecta diferencias en el código real, no en los imports. Cuando apliques cambios, verifica que los imports sigan funcionando ejecutando:
+Tras modificar el validador, verifica que los imports siguen funcionando:
 
 ```bash
 npx tsx scripts/lib/backend-validator/run-validation.ts _templates/base-full.json full
 ```
 
-### Artefactos que NO se sincronizan automáticamente (requieren comandos manuales)
+### Regeneración de artefactos (comandos manuales)
 
 | Artefacto | Fuente canónica | Comando manual |
 |---|---|---|
 | `_templates/base-*.json` | `buildDefaultStructuredLogicForMode(mode)` en `src/domain/chat/default-structured-logic.ts` | `npx tsx -e "import {buildDefaultStructuredLogicForMode as b} from '<backend>/src/domain/chat/default-structured-logic'; import fs from 'fs'; fs.writeFileSync('_templates/base-full.json', JSON.stringify(b('full'), null, 2)); fs.writeFileSync('_templates/base-tasks-only.json', JSON.stringify(b('tasks-only'), null, 2));"` |
 | `scripts/lib/schemas/structured-logic-schema.json` | `StructuredLogicJsonSchema` en `structured-logic-json-schema.ts` | `npx tsx -e "import {StructuredLogicJsonSchema as S} from './scripts/lib/backend-validator/structured-logic-json-schema'; import fs from 'fs'; fs.writeFileSync('scripts/lib/schemas/structured-logic-schema.json', JSON.stringify(S, null, 2));"` |
 
-**Verificación de paridad:** tras sincronizar, ejecuta `bash scripts/sync-backend.sh --diff` para confirmar que no quedan diferencias inesperadas.
+### Diagnóstico de leads con comportamiento inesperado
+
+Cuando un lead presenta un comportamiento anómalo, el agente analiza el JSON de producción de la clínica con el validador local y la documentación del repo para determinar si el problema está en el **JSON de la clínica** (error de configuración). Si el JSON no explica el comportamiento, puede tratarse de un **bug del backend**: el caso se escala al administrador del sistema, que tiene acceso al código del backend.
 
 ---
 

@@ -1,6 +1,6 @@
 # scripts/ — Scripts del repo
 
-Esta carpeta contiene los scripts que ejecuta el agente y el administrador para validar, sincronizar y mantener el repo.
+Esta carpeta contiene los scripts que ejecuta el agente y el administrador para validar y mantener el repo.
 
 ---
 
@@ -35,24 +35,8 @@ bash scripts/sync-agents.sh
 
 | Script | Qué hace | Cuándo usarlo |
 |---|---|---|
-| `sync-backend.sh` | Importa código del backend a `scripts/lib/backend-source/` y compara con `backend-validator/` | Cuando el backend cambia y hay que actualizar el context codebase |
 | `fetch-sedes-from-db.ts` | Descarga las sedes desde PostgreSQL a `sedes/` | Para actualizar las carpetas de sedes desde la DB |
 | `push-sedes-to-db.ts` | Sube las sedes desde `sedes/` a PostgreSQL | Para publicar cambios en las sedes a la DB |
-
-### Uso de sync-backend.sh
-
-```bash
-# Comparar resumidamente
-bash scripts/sync-backend.sh
-
-# Ver diffs detallados
-bash scripts/sync-backend.sh --diff
-
-# Aplicar cambios del backend a la réplica local
-bash scripts/sync-backend.sh --apply
-```
-
-**⚠️ Solo el administrador ejecuta `sync-backend.sh`.** Los asesores no tienen acceso al backend y no necesitan hacerlo.
 
 ---
 
@@ -62,7 +46,6 @@ bash scripts/sync-backend.sh --apply
 |---|---|
 | `prompts/generate-*.md` | Instrucciones modulares que lee el agente para generar cada sección del JSON |
 | `lib/backend-validator/` | Réplica funcional del validador (ver `lib/README.md`) |
-| `lib/backend-source/` | Context codebase del backend para diagnóstico (ver `lib/README.md`) |
 | `lib/schemas/` | Schemas JSON exportados |
 
 ---
@@ -84,8 +67,8 @@ bash scripts/sync-backend.sh --apply
 
 ```
 1. El backend cambia (nuevo deploy, nueva regla de validación, nueva tool)
-2. bash scripts/sync-backend.sh --diff      ← ver qué cambió
-3. bash scripts/sync-backend.sh --apply     ← aplicar cambios
+2. Actualizar scripts/lib/backend-validator/ manualmente
+3. Regenerar scripts/lib/schemas/structured-logic-schema.json (ver README raíz)
 4. Actualizar _templates/ si el default del backend cambió
 5. Actualizar agentes (AGENTS/*.md) si hay nuevas reglas
 6. bash scripts/sync-agents.sh              ← copiar agentes a opencode

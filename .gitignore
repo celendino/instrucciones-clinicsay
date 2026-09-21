@@ -21,6 +21,3 @@ Thumbs.db
 *~
 .vscode/
 .idea/
-
-# (Nota: scripts/lib/backend-source/ NO se ignora — es el context codebase
-#  que los agentes leen para diagnosticar leads. Se incluye en git.)

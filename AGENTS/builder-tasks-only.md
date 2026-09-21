@@ -264,6 +264,19 @@ Cuando el asesor pide cambios (ej: "cambia el tono a más cálido"):
 4. Vuelve a ejecutar gap-detector
 5. Confirma al asesor: "Hecho. [Campo] ajustado a [valor]. Validado."
 
+### 6.1 PROTOCOLO OBLIGATORIO DE EDICIÓN QUIRÚRGICA
+
+Cuando el asesor pida actualizar un JSON existente de una sede, la modificación debe ser mínima y localizada:
+
+1. Trabaja únicamente en la sede y el modo solicitados. No modifiques otras sedes, el otro modo, `input/`, scripts ni templates.
+2. Copia el archivo exacto de `input/` a `output/structured-logic.tasks-only.draft.json`. Nunca edites el archivo de `input/`.
+3. Cambia únicamente las rutas JSON necesarias para cumplir la petición. No regeneres el JSON completo, no reescribas notas, templates, reglas o flows no relacionados y no añadas mejoras no solicitadas.
+4. Si la ruta solicitada no existe o requiere inventar una estructura nueva, detente y pregunta al asesor; no la completes por suposición.
+5. Antes de validar, compara el draft con el archivo de `input/` y confirma que el diff contiene exclusivamente las rutas solicitadas. Si aparecen cambios adicionales, restaura el draft desde `input/` y repite la edición de forma más específica.
+6. Valida siempre el draft, ejecuta `gap-detector` y `check-structure`, y promueve a `structured-logic.tasks-only.json` solo el draft válido.
+
+Este protocolo también es obligatorio para cualquier subagente delegado: debe recibir una sola sede, un solo modo y el conjunto exacto de rutas que puede modificar.
+
 ---
 
 ## 7. REGLAS ABSOLUTAS
@@ -377,16 +390,16 @@ Sintaxis del draft: válida
 9. **God Mode:** Si `isGodMode: true`, puedes saltar validación y gaps para generar configs de prueba.
 10. **REGLA DE ORO DEL PACIENTE:** El bot NUNCA asume nombre, apellido ni teléfono del contacto de Kommo (CALLER_PHONE, ASSOCIATED_PATIENTS). Siempre pregunta al interlocutor explícitamente antes de agendar. Solo si el paciente dice "para mí", "a este número" o "mi número", usar `useInterlocutorPhone=true`.
 11. **NUNCA mostrar identificadores técnicos al paciente.** En `responseTemplates` y `patientOutcome`, NUNCA incluir `responseTemplateKey`, nombres de keys, `blockId` (ej: `01KZH...`) ni tools. Usar mensajes en español natural: "Tu cita ha sido cancelada", "Tu cita ha quedado confirmada".
-12. **NO toques código del repo.** Solo el administrador del sistema sabe cuándo actualizar el código importado del backend, cuándo pedir actualizar el validador local y cuándo actualizar prompts. El código de este repo (`scripts/`, `_templates/`, `structured-logic-standards.md`) es la versión correcta en producción. Si encuentras una discrepancia, **confía en el validador local**. NUNCA ejecutes `scripts/sync-backend.sh`, NUNCA modifiques archivos en `scripts/lib/backend-validator/` ni en `_templates/`, y NUNCA le pidas al asesor que sincronice nada del backend.
+12. **NO toques código del repo.** Solo el administrador del sistema sabe cuándo actualizar el validador local y cuándo actualizar prompts. El código de este repo (`scripts/`, `_templates/`, `structured-logic-standards.md`) es la versión correcta en producción. Si encuentras una discrepancia, **confía en el validador local**. NUNCA modifiques archivos en `scripts/lib/backend-validator/` ni en `_templates/`.
 13. **Investigación de leads con comportamiento inesperado.** Si un lead nuevo presenta un comportamiento anómalo (ej. no crea tarea cuando debería, crea tarea cuando no debería, responde fuera de contexto, no responde a consultas), sigue estos pasos:
 
     a. **Pide al asesor** el `structured-logic.full.json` actualmente en producción en el backend (el asesor puede obtenerlo desde el dashboard o solicitándolo al equipo técnico).
     
-    b. **Lee el código del backend** en `scripts/lib/backend-source/` — esta carpeta contiene el context codebase del módulo del chatbot (validadores, tool policies, intents canónicos, schemas). Es el código real que el backend ejecuta en producción.
+    b. **Analiza el JSON de producción** con el validador local (`node scripts/validate-and-save.js --sede <sede> --mode <modo>`), el gap detector y la documentación del repo (`structured-logic-standards.md`, `scripts/prompts/`) para identificar si el comportamiento se explica por la configuración de la clínica (error de configuración en el JSON).
     
-    c. **Compara el JSON de producción con el código del backend** para identificar si el bug está en el JSON de la clínica (error de configuración) o en el código del backend (bug del sistema). Por ejemplo, si una tool fue bloqueada, revisa `backend-source/application/chat/use-cases/RunToolCycle/tool-call-policy.ts` para entender la regla exacta.
+    c. **Si el JSON no explica el comportamiento**, puede tratarse de un bug del sistema. El código del backend no está disponible en este repo: indica al asesor que el caso debe escalarlo al administrador del sistema, que tiene acceso al backend.
     
-    d. **Reporta tu diagnóstico** al asesor con: qué encontraste en el JSON, qué dice el código del backend, y si el problema está en el JSON o en el backend.
+    d. **Reporta tu diagnóstico** al asesor con: qué encontraste en el JSON, y si el problema está en la configuración de la clínica o requiere revisión del backend por el administrador.
 
 ### 7.1. Cross-Check contra Template Base (OBLIGATORIO antes de entregar)
 
