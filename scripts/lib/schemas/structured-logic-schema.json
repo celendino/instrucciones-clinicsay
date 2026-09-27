@@ -312,6 +312,12 @@
                     "parallel": {
                       "type": "boolean"
                     },
+                    "toolActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
                     "required": {
                       "type": "array",
                       "items": {

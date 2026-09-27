@@ -40,6 +40,7 @@ export type WireFlow = {
     step: number;
     tools: string[];
     parallel: boolean;
+    toolActions?: string[] | null;
     required?: string[] | null;
     note?: string | null;
   }>;

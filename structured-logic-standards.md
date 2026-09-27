@@ -91,7 +91,7 @@ All `description` fields (in intents, rules, and flows) must describe **intent a
 ### Replacement-Sensitive Tool Ordering
 During rescheduling, the preparatory cancellation must never run before — or alongside — the tool that creates the replacement appointment. Definitive cancellation is a separate terminal action and does not require a replacement.
 
-**Rescheduling rule (validator-enforced, blocking):** in a full rescheduling flow, the preparatory cancellation must not use `manage_schedule_block_status` before `schedule_block`, nor in the same step (with or without `parallel: true`). Use `cancel_for_rescheduling` for that preparatory action. `manage_schedule_block_status` is the tool for definitive cancellation, confirmation, or marking the patient on the way; those flows do not need a replacement `schedule_block`.
+**Rescheduling rule (validator-enforced, blocking):** in a full rescheduling flow, the preparatory cancellation must use `cancel_for_rescheduling`. `manage_schedule_block_status` is allowed only in a later restore step with the structural `toolActions: ["restore"]` contract; it is otherwise reserved for definitive cancellation, confirmation, or marking the patient on the way.
 
 **Why:** cancelling before the new appointment exists leaves the patient **with no appointment at all** when no slot is found, when they do not pick one, or when they simply stop replying. This is irrecoverable data loss and it happened in production.
 
@@ -112,6 +112,34 @@ Use generic placeholders ("the clinic", "the patient", "the interlocutor"). Neve
 
 ### Interlocutor vs. Beneficiary
 The person sending the message (interlocutor) may be the patient, a partner, a family member, or a friend. Descriptions always refer to the **patient as the beneficiary** of the intent, regardless of who is typing.
+
+---
+
+## Prompt Budget: Incident Fixes Belong in the Backend, Not the Prompt
+
+**Policy (approved 2026-09-22):** every incident fix is implemented first as a **deterministic backend guardrail, with a test** (validator rule, orchestrator guard, tool evidence). A prompt rule is added **only** when it expresses clinic business policy that the backend cannot know (prices, professional priorities, tone, privacy choices, task policies, clinic-specific cases).
+
+**Why:** patching incidents by appending rules to `styleRules.additionalRules` makes the prompt grow without bound until it contradicts itself — duplicated rules, forbidden phrases quoted verbatim (which primes the model to produce them), templates fighting flows. A prompt that tries to do the backend's job degrades both.
+
+Before adding (or keeping) an `additionalRules` entry, ask:
+
+1. Can the backend enforce this deterministically? → implement it there, with a test; remove the prompt rule.
+2. Does it express policy only the clinic knows? → it belongs in the prompt, written as policy, not as an incident patch.
+
+**Budget guardrail:** `scripts/check-prompt-budget.js` measures what the JSON contributes to the rendered system prompt and **fails (exit 1)** when it exceeds the approved budgets:
+
+| Metric | Budget |
+|---|---|
+| `styleRules.additionalRules` (sum of rule texts) | **8,000 chars** |
+| Rendered prompt estimate | **45,000 chars** |
+
+```bash
+node scripts/check-prompt-budget.js --sede <SEDE> --mode <full|tasks-only>
+```
+
+The rendered estimate measures the sections the backend injects into the system prompt (`src/application/chat/build-system-prompt/` in `clinicsay-backend`): identity, styleRules, serviceCatalog, treatmentSelectionGuidance, responseTemplates, intents, toolOrchestration.flows, the protocols catalog and conversationResumption. `systemPromptInstructions` is **builder-only** — the backend never renders it, so it does not count. Runtime placeholders are measured unresolved, so the estimate is a floor, not an exact size.
+
+`validate-and-save.js` runs the same measurement and reports breaches as **non-blocking** warnings; the standalone script is the gate to run before publishing.
 
 ---
 
@@ -191,10 +219,15 @@ Flows reference registry entries by key; the text lives in `responseTemplates` (
   step: number;               // Step number (1-based)
   tools: string[];            // Tool names to execute in this step
   parallel: boolean;          // Execute in parallel?
+  toolActions?: string[];     // Structural action declarations for scoped tools
   required?: string[];         // Required vs optional tools
   note?: string;              // Explanatory note for the LLM
 }
 ```
+
+`toolActions` is the structural contract for action-specific tool behavior. A restore step in `existing_appointment_rescheduling` MUST declare `toolActions: ["restore"]`, require `hasCancelledRescheduleTarget`, and appear after `cancel_for_rescheduling`. The validator reads this field only; it MUST NOT infer actions from `note`, `description`, examples, or any other prose.
+
+Regex or text sniffing to detect actions is absolutely prohibited. Wording such as "Recuperar la cita" is descriptive text only and must never determine whether a step restores an appointment.
 
 ### `BusinessRule`
 
@@ -356,9 +389,9 @@ When both `manage_schedule_block_status` and `create_task` are configured in one
 - `Protocol.responseTemplate` is a non-empty string if the protocol exists.
 
 ### Flow safety (blocking — see "Destructive Tools Come Last" and "Response Template")
-- In full rescheduling, `manage_schedule_block_status` is not the preparatory cancellation; use `cancel_for_rescheduling` and then the replacement-booking sequence.
+- In full rescheduling, `manage_schedule_block_status` is not the preparatory cancellation; use `cancel_for_rescheduling` and then the replacement-booking sequence. A later restore action must use the structural `toolActions: ["restore"]` contract.
 - A `full`-mode reschedule flow that can cancel must also have `schedule_block` available.
-- `allowedTools` is an UNORDERED whitelist and can never anchor the safe order. In a full reschedule, the ordered `steps` must contain `resolve_patient`, `resolve_reschedule_target`, `cancel_for_rescheduling`, `resolve_availability_query`, `check_availability`, and `schedule_block` in that order; `schedule_block` must be the terminal booking step. `manage_schedule_block_status` belongs to definitive cancellation, confirmation, or on-the-way flows, not to the preparatory rescheduling sequence.
+- `allowedTools` is an UNORDERED whitelist and can never anchor the safe order. In a full reschedule, the ordered `steps` must contain `resolve_patient`, `resolve_reschedule_target`, `cancel_for_rescheduling`, `resolve_availability_query`, `check_availability`, and `schedule_block` in that order; `schedule_block` must be the terminal booking step. A later `manage_schedule_block_status` step is allowed only for structural restore.
 - A target only continues inside a trusted conversation context. `continuous`, `short_break`, `same_period` and `recent` may continue it; `distant` starts a new conversation and discards the target, operational intent, inherited slots and prior availability.
 - Appointment-writing flows must use a canonical intent. Free intents are valid outside the reserved `new_appointment_` and `existing_appointment_` namespaces when their flows use only non-writing tools.
 - In a full booking flow, `resolve_patient` must be in a step before `schedule_block`; no relative ordering with availability tools is required.

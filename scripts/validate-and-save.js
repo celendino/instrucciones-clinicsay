@@ -22,6 +22,7 @@ const fs = require('fs');
 const { getSedePaths, getSchemaPath, getActiveJsonPath } = require('./lib/paths.cjs');
 const { ALL_TOOLS } = require('./lib/tool-registry.cjs');
 const { extractAllowedKeys } = require('./lib/schema-key-extractor.cjs');
+const { measurePromptBudget } = require('./lib/prompt-budget.cjs');
 const logger = require('./lib/logger.cjs');
 
 // Load JSON Schema once and derive allowed-key Sets programmatically
@@ -283,6 +284,12 @@ function validateSchema(data, errors) {
               validateType(step.step, 'number', `flows.${name}.steps[${i}].step`, errors);
               validateType(step.tools, 'array', `flows.${name}.steps[${i}].tools`, errors);
               validateType(step.parallel, 'boolean', `flows.${name}.steps[${i}].parallel`, errors);
+              if (step.toolActions !== undefined) {
+                validateType(step.toolActions, 'array', `flows.${name}.steps[${i}].toolActions`, errors);
+                if (Array.isArray(step.toolActions) && step.toolActions.some(action => typeof action !== 'string')) {
+                  errors.push({ category: 'schema', message: `Flow "${name}" step ${step.step} toolActions must contain only strings.` });
+                }
+              }
               // Validate that required does not contain tool names (must be capabilities or empty)
               if (step.required && Array.isArray(step.required)) {
                 const invalid = step.required.filter(r => ALL_TOOLS.includes(r));
@@ -777,10 +784,24 @@ function validateFlowSafety(data, mode, errors) {
   // 4. Full rescheduling flows with schedule_block cannot use manage_schedule_block_status
   if (mode === 'full') {
     for (const [flowName, flow] of Object.entries(flows)) {
-      if (RESCHEDULING_INTENTS.has(flow.intent) && flowUsesTool(flow, 'schedule_block') && flowUsesTool(flow, 'manage_schedule_block_status')) {
-        errors.push({
-          category: 'business',
-          message: `Flow "${flowName}" (intent: ${flow.intent}) in full mode cannot use "manage_schedule_block_status" as the rescheduling cancellation route. Use "cancel_for_rescheduling" before availability resolution; "manage_schedule_block_status" is reserved for definitive cancellation, confirmation, or EN_ROUTE flows.`,
+      if (RESCHEDULING_INTENTS.has(flow.intent)) {
+        const cancelIndex = firstStepWithTool(flow, 'cancel_for_rescheduling');
+        (flow.steps || []).forEach((step, stepIndex) => {
+          if (!(step.tools || []).includes('manage_schedule_block_status')) return;
+          const actions = step.toolActions;
+          if (
+            !Array.isArray(actions) ||
+            actions.length !== 1 ||
+            actions[0] !== 'restore' ||
+            !Array.isArray(step.required) ||
+            !step.required.includes('hasCancelledRescheduleTarget') ||
+            stepIndex <= cancelIndex
+          ) {
+            errors.push({
+              category: 'business',
+              message: `Flow "${flowName}" (intent: ${flow.intent}) uses "manage_schedule_block_status" for restore and must declare toolActions: ["restore"], require "hasCancelledRescheduleTarget", and place the step after "cancel_for_rescheduling".`,
+            });
+          }
         });
       }
     }
@@ -982,6 +1003,12 @@ function main() {
 
   const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
+  // ── Prompt budget (policy 2026-09-22: incident fixes belong in deterministic ──
+  // ── backend guardrails, not in accumulated prompt rules). Advisory only:     ──
+  // ── breaches surface as NON-blocking warnings, same philosophy as gaps.      ──
+  // ── The blocking gate is scripts/check-prompt-budget.js.                     ──
+  const promptBudget = measurePromptBudget(data);
+
   // ── Backend-real validation (replicated, not imported from external repo) ──
   // Output shape: { valid, errors, gaps, qualityScore }
   //   - errors: blocking (prevent saving)
@@ -1019,6 +1046,21 @@ function main() {
   const gaps = backendResult.gaps || [];
   const qualityScore = backendResult.qualityScore || null;
 
+  for (const breach of promptBudget.breaches) {
+    gaps.push({
+      severity: 'high',
+      type: 'prompt_budget',
+      description: `Prompt budget exceeded: ${breach.metric} = ${breach.measured} chars (budget ${breach.budget}). Incident fixes belong in deterministic backend guardrails (with tests), not in accumulated prompt rules — see structured-logic-standards.md, "Prompt Budget". Full report: node scripts/check-prompt-budget.js --sede <SEDE> --mode <full|tasks-only>.`,
+    });
+  }
+
+  const promptBudgetSummary = {
+    withinBudget: promptBudget.withinBudget,
+    additionalRulesChars: promptBudget.additionalRules.chars,
+    renderedPromptChars: promptBudget.renderedPrompt.chars,
+    budgets: promptBudget.budgets,
+  };
+
   if (backendResult.valid && allErrors.length === 0) {
     // Valid: promote the exact draft that was validated.
     if (jsonPath === paths.draft) {
@@ -1052,6 +1094,7 @@ function main() {
       templates: Object.keys(data.responseTemplates || {}).length,
       warnings: gaps.map(g => ({ severity: g.severity, type: g.type, description: g.description })),
       qualityScore,
+      promptBudget: promptBudgetSummary,
       file: paths.final,
     };
     console.log(JSON.stringify(summary, null, 2));
@@ -1079,7 +1122,7 @@ function main() {
       }
     }
 
-    console.log(JSON.stringify({ status: 'invalid', errors: byCategory }, null, 2));
+    console.log(JSON.stringify({ status: 'invalid', errors: byCategory, promptBudget: promptBudgetSummary }, null, 2));
     process.exit(1);
   }
 }

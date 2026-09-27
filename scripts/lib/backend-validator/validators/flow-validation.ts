@@ -239,6 +239,13 @@ export function validateFlowsAndTools(
           `Flow '${flowName}' step ${stepIndex + 1} uses deprecated "condition" field. Move the condition text into the step "note" instead.`,
         );
       }
+      if (step.toolActions !== undefined) {
+        if (!Array.isArray(step.toolActions) || step.toolActions.some((action) => typeof action !== 'string')) {
+          errors.push(
+            `Flow '${flowName}' step ${stepIndex + 1} toolActions must be an array of strings.`,
+          );
+        }
+      }
       step.tools.forEach((tool) => {
         if (!validTools.has(tool)) {
           errors.push(
@@ -428,12 +435,23 @@ export function validateFlowsAndTools(
         continue;
       }
 
-      if (flowUsesTool(flow, 'manage_schedule_block_status')) {
-        errors.push(
-          `Flow "${flowName}" (intent: ${flow.intent}) in full mode cannot use "manage_schedule_block_status" ` +
-            `as the rescheduling cancellation route. Use "cancel_for_rescheduling" before availability resolution; ` +
-            `"manage_schedule_block_status" is reserved for definitive cancellation, confirmation, or EN_ROUTE flows.`,
-        );
+      const restoreSteps = flow.steps.filter((step) =>
+        (step.tools || []).includes('manage_schedule_block_status'),
+      );
+      for (const restoreStep of restoreSteps) {
+        const actions = restoreStep.toolActions;
+        if (
+          !Array.isArray(actions) ||
+          actions.length !== 1 ||
+          actions[0] !== 'restore' ||
+          !Array.isArray(restoreStep.required) ||
+          !restoreStep.required.includes('hasCancelledRescheduleTarget') ||
+          flow.steps.indexOf(restoreStep) <= cancelIndex
+        ) {
+          errors.push(
+            `Flow "${flowName}" (intent: ${flow.intent}) uses "manage_schedule_block_status" for restore and must declare toolActions: ["restore"], require "hasCancelledRescheduleTarget", and place the step after "cancel_for_rescheduling".`,
+          );
+        }
       }
 
       if (cancelIndex < 0) {

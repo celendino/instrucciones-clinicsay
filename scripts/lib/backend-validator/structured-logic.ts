@@ -199,6 +199,8 @@ export type ToolStep = {
   step: number;
   tools: string[];
   parallel: boolean;
+  /** Declarative actions performed by scoped tools in this step. */
+  toolActions?: string[];
   required?: string[];
   note?: string;
 };

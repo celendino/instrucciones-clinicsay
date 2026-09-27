@@ -99,6 +99,7 @@ export const StructuredLogicWireJsonSchema = {
                     step: { type: 'number' },
                     tools: { type: 'array', items: { type: 'string', enum: ALL_CHAT_TOOL_NAMES } },
                     parallel: { type: 'boolean' },
+                    toolActions: { type: ['array', 'null'], items: { type: 'string' } },
                     required: { type: ['array', 'null'], items: { type: 'string' } },
                     note: { type: ['string', 'null'] },
                   },

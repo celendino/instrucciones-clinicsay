@@ -11,6 +11,7 @@ Esta carpeta contiene los scripts que ejecuta el agente y el administrador para 
 | `validate-and-save.js` | Valida un JSON de clínica contra el schema y las reglas del backend | Después de generar o editar un JSON, antes de entregar |
 | `gap-detector.js` | Detecta inconsistencias entre el input de la clínica y el JSON generado | Después de validar, para detectar gaps de información |
 | `check-structure.js` | Verifica que todas las secciones del JSON existen y tienen contenido mínimo | Después de validar, como verificación estructural |
+| `check-prompt-budget.js` | Verifica el presupuesto de tamaño del prompt (8.000 chars en `additionalRules`, 45.000 chars renderizados estimados) | Antes de publicar, o cuando el prompt crece por reglas acumuladas |
 | `sync-agents.sh` | Copia los agentes (`AGENTS/*.md`) al directorio de opencode | Después de editar un agente, o al instalar el repo en una máquina nueva |
 
 ### Uso rápido
@@ -24,6 +25,9 @@ node scripts/gap-detector.js --sede demo --mode full
 
 # Verificar estructura
 node scripts/check-structure.js --sede demo --mode full
+
+# Verificar presupuesto de prompt (gate: exit 1 si se excede)
+node scripts/check-prompt-budget.js --sede demo --mode full
 
 # Sincronizar agentes (tras editar AGENTS/*.md)
 bash scripts/sync-agents.sh

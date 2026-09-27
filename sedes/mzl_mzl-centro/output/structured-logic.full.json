@@ -13,7 +13,7 @@
       "question": "¿Qué tratamientos ofrecen?"
     },
     {
-      "answer": "Horario habitual: lunes a miércoles, mañanas de 10:00 a 15:00 y tardes de 15:30 a 19:00; jueves y viernes de 09:00 a 15:00. Sí, puede llamarnos al 871 172 766 o escribirnos por WhatsApp al 622 897 067. Urgencias: 622 611 069.",
+      "answer": "Horario habitual: lunes a miércoles, mañanas de 10:00 a 15:00 y tardes de 15:30 a 19:00; jueves y viernes de 09:00 a 15:00. Sí, puede llamarnos al 871 172 766 o escribirnos por WhatsApp al 622 897 067. Urgencias: 662 611 069.",
       "question": "¿Cuál es el teléfono de la clínica y en qué horario puedo llamar?"
     },
     {
@@ -65,7 +65,7 @@
       "question": "¿Qué médicos trabajan en la clínica?"
     },
     {
-      "answer": "El mantenimiento periodontal con anestesia cuesta 95 € por sesión de aproximadamente 60 minutos. Es una limpieza dental profunda indicada para pacientes con implantes, fumadores, diabetes u otras patologías.",
+      "answer": "El mantenimiento periodontal con anestesia es la opción de limpieza profunda del catálogo para pacientes con implantes, fumadores, diabetes u otras patologías. Dura aproximadamente 60 minutos; el precio se confirma según el caso en clínica.",
       "question": "¿Cuánto cuesta el mantenimiento periodontal con anestesia?"
     },
     {
@@ -85,15 +85,15 @@
       "question": "¿Qué pasa si tengo un presupuesto con tratamiento RECONSTRUCCIÓN?"
     },
     {
-      "answer": "La Visita de Urgencia cuesta 50 € y tiene una duración aproximada de 30 minutos. La radiografía solo se realiza si el especialista la considera necesaria.",
+      "answer": "La Visita de Urgencia cuesta 50 € y tiene una duración aproximada de 60 minutos. La radiografía solo se realiza si el especialista la considera necesaria.",
       "question": "¿Cuánto cuesta una visita de urgencia?"
     },
     {
-      "answer": "La Tomografia Axial Computerizada 3D (CBCT), conocida comercialmente como 'TAC 3D completo', cuesta 150 €. Es una radiografía de alta resolución con menor radiación que un TAC médico convencional. Duración aproximada: unos 30 minutos.",
+      "answer": "La Tomografia Axial Computerizada 3D (CBCT), conocida comercialmente como 'TAC 3D completo', cuesta 150 €. Es una radiografía de alta resolución con menor radiación que un TAC médico convencional. Duración aproximada: unos 5 minutos.",
       "question": "¿Cuánto cuesta un TAC 3D completo?"
     },
     {
-      "answer": "La ortopantomografía cuesta 90 €. Duración aproximada: unos 30 minutos. Es útil para caries profundas, dientes retenidos, enfermedades periodontales, planificación de ortodoncia/implantes/cirugías, quistes y fracturas óseas.",
+      "answer": "La ortopantomografía cuesta 90 €. Duración aproximada: unos 5 minutos. Es útil para caries profundas, dientes retenidos, enfermedades periodontales, planificación de ortodoncia/implantes/cirugías, quistes y fracturas óseas.",
       "question": "¿Cuánto cuesta una ortopantomografía?"
     },
     {
@@ -105,7 +105,7 @@
       "question": "¿Cuánto cuesta la fluorización?"
     },
     {
-      "answer": "La Terapia GBT (Higiene y Desinfección), conocida comercialmente como 'Guided Biofilm Therapy', utiliza tecnología AIRFLOW para eliminar biofilm de forma suave y efectiva, incluso en zonas sensibles. Es indolora y cuesta desde 95 € por sesión. Se recomienda cada 3–6 meses.",
+      "answer": "La Terapia GBT (Higiene y Desinfección), conocida comercialmente como 'Guided Biofilm Therapy', utiliza tecnología AIRFLOW para eliminar biofilm de forma suave y efectiva, incluso en zonas sensibles. Una sesión dura aproximadamente 60 minutos, es indolora y cuesta desde 95 € por sesión. Se recomienda cada 3–6 meses.",
       "question": "¿Qué es la Terapia GBT?"
     },
     {
@@ -121,7 +121,7 @@
       "question": "¿Cuál es el número de cuenta para pagar por transferencia?"
     },
     {
-      "answer": "El precio de un empaste (obturación de composite) es personalizado: depende del caso y se confirma siempre en clínica tras valorarle. La primera visita de valoración es gratuita.",
+      "answer": "El precio de un empaste es personalizado: depende del caso y se confirma siempre en clínica tras valorarle. No comunicamos precios cerrados por este tratamiento. La primera visita de valoración es gratuita.",
       "question": "¿Cuánto cuesta un empaste?"
     },
     {
@@ -202,7 +202,7 @@
     },
     {
       "id": "urgency_follow_up",
-      "note": "Crear tarea con descripción de síntomas. No hacer triaje clínico. Indicar el teléfono de urgencias 622 611 069 si es una urgencia grave.",
+      "note": "Crear tarea con descripción de síntomas. No hacer triaje clínico. Indicar el teléfono de urgencias 662 611 069 si es una urgencia grave.",
       "action": "allow",
       "intent": "urgency_report",
       "description": "El paciente reporta una urgencia dental con dolor intenso, sangrado, traumatismo, supuración o pieza rota."
@@ -223,7 +223,7 @@
     },
     {
       "id": "medical_zero_triage",
-      "note": "No diagnosticar, no pedir gravedad ni hacer preguntas clínicas. Crear una única tarea administrativa para revisión humana. Si es urgencia grave, indicar el teléfono de urgencias 622 611 069.",
+      "note": "No diagnosticar, no pedir gravedad ni hacer preguntas clínicas. Crear una única tarea administrativa para revisión humana. Si es urgencia grave, indicar el teléfono de urgencias 662 611 069.",
       "action": "allow",
       "intent": "human_follow_up",
       "description": "El paciente solicita valoración clínica, diagnóstico, medicación, aptitud, interpretación de síntomas o información sobre su caso médico concreto."
@@ -646,7 +646,8 @@
       "Si una búsqueda amplia de disponibilidad devuelve 0 huecos para un tratamiento habitual (limpieza, primera visita), tratarlo como anómalo: no entrar en bucle de preguntas de preferencias, informar con transparencia al paciente y crear tarea para que recepción verifique la agenda manualmente.",
       "Al ofrecer citas, proponer únicamente huecos concretos (fecha y hora) devueltos por la consulta de disponibilidad en este turno; nunca proponer días o franjas a ciegas.",
       "Nunca mostrar al paciente listados crudos de herramientas (series de fechas con nombres de doctor repetidos): ofrecer SOLO la primera fecha válida para la franja pedida, en lenguaje natural (día de la semana, fecha y hora), y solo ofrecer más fechas si el paciente dice que no le sirve o pide alternativas; nunca repetir fechas ya ofrecidas.",
-      "SOLO para un paciente EXISTENTE: cuando pida una 'limpieza' (a secas, 'básica', 'rápida' o 'con revisión'), una 'higiene' o una 'higiene dental', resolver SIEMPRE el tratamiento exacto 'Mantenimiento periodontal' (limpieza dental de la clínica, 95 €, unos 60 minutos), SIN preguntar qué tipo de limpieza quiere ni ofrecer tipologías inventadas. NUNCA resolver estas peticiones como 'Terapia GBT (Higiene y Desinfección)': en pacientes existentes, Terapia GBT (Higiene y Desinfección) solo aplica si mencionan expresamente 'GBT' o 'Airflow'. Si el paciente es NUEVO, esta regla NO aplica: debe resolverse la 'Primera Visita' (también para higiene/limpieza). En la conversación y en las confirmaciones llamarlo simplemente 'limpieza': nunca mencionar nombres internos. El Mantenimiento periodontal se realiza SIEMPRE con la higienista Betina Andrea Vidal, en el box 3, y dura 60 minutos: nunca ofrecerlo con el Dr. Zaragoza ni otro profesional, en otro gabinete, ni en sesiones de 30 minutos.",
+      "SOLO para un paciente EXISTENTE: cuando pida una 'limpieza' (a secas, 'básica', 'rápida' o 'con revisión'), una 'higiene' o una 'higiene dental', resolver SIEMPRE el tratamiento exacto 'Mantenimiento periodontal' (limpieza dental de la clínica, aproximadamente 60 minutos), SIN preguntar qué tipo de limpieza quiere ni ofrecer tipologías inventadas. Si pregunta por GBT/Airflow, explicar que es la tecnología de higiene y desinfección utilizada para eliminar biofilm y que una sesión dura aproximadamente 60 minutos, pero para la operación de agenda resolver el tratamiento como 'Mantenimiento periodontal'. 'Mantenimiento periodontal con anestesia' se reconoce como concepto del catálogo/PMS relacionado, sin inventar otro tratamiento ni precio. Si el paciente es NUEVO, esta regla NO aplica: debe resolverse la 'Primera Visita' (también para higiene/limpieza). En la conversación y en las confirmaciones llamarlo simplemente 'limpieza': nunca mencionar nombres internos. El Mantenimiento periodontal se realiza SIEMPRE con la higienista Betina Andrea Vidal, en el box 3, y dura 60 minutos: nunca ofrecerlo con el Dr. Zaragoza ni otro profesional, en otro gabinete, ni en sesiones de 30 minutos.",
+      "Cuando el paciente pregunte por una limpieza, explicar GBT/Guided Biofilm Therapy y AIRFLOW solo como la tecnología de higiene y desinfección cuando sea relevante; la cita operativa debe resolverse y agendarse como Mantenimiento periodontal de aproximadamente 60 minutos. No convertir GBT/Airflow en un tratamiento alternativo para una petición genérica de limpieza.",
       "Si el día pedido cae en sábado o domingo, indicar que la clínica cierra ese día y ofrecer directamente los huecos reales más cercanos.",
       "Responder SIEMPRE en el MISMO idioma en que escribe la paciente en su mensaje actual, salvo respuestas a recordatorios que deben ser en español.",
       "Si el paciente pregunta algo fuera del ámbito de la clínica (no relacionado con odontología, servicios de MZL o citas), responder amablemente que no puede ayudar con ese tema y ofrecer asistencia sobre los servicios de la clínica.",
@@ -704,7 +705,7 @@
     "treatments": [
       {
         "name": "Primera Visita",
-        "description": "Primera vez en la clínica por cualquier motivo que NO sea ortodoncia ni implantes (conocida comercialmente como 'primera visita general'): revisión, caries, empaste, limpieza, estética, dolor no urgente, dudas. Consulta inicial gratuita con valoración del doctor, fotografías clínicas y escaneo digital; solo se cobra radiografía si es necesaria para el diagnóstico. Duración aproximada: 1 hora. TODAS las primeras visitas se reservan con este tratamiento, incluidas las de ortodoncia e implantes: la especialidad es contexto de la conversación, no otro tratamiento.",
+        "description": "Primera vez en la clínica por cualquier motivo: revisión, caries, empaste, limpieza, estética, dolor no urgente o dudas. También puede llamarse conversacionalmente 'cita informativa' o 'primera visita informativa'; ambos son alias de Primera Visita, no tratamientos distintos. Consulta inicial gratuita con valoración del doctor, fotografías clínicas y escaneo digital; solo se cobra radiografía si es necesaria para el diagnóstico. Duración aproximada: 1 hora. TODAS las primeras visitas se reservan con este tratamiento, incluidas las de ortodoncia e implantes: la especialidad es contexto de la conversación, no otro tratamiento.",
         "priceDescription": "Gratuita",
         "requiresConsultation": false
       },
@@ -722,7 +723,7 @@
       },
       {
         "name": "Mantenimiento periodontal",
-        "description": "Limpieza dental de aproximadamente 60 minutos. Se recomienda cada 3–6 meses.",
+        "description": "Limpieza dental de aproximadamente 60 minutos. La tecnología GBT/AIRFLOW puede explicarse como parte de la higiene y desinfección, pero las solicitudes operativas de limpieza se resuelven y agendan como Mantenimiento periodontal. El catálogo también reconoce 'Mantenimiento periodontal con anestesia' como concepto relacionado, sin crear un tratamiento adicional. Se recomienda cada 3–6 meses.",
         "priceDescription": "95 € por sesión",
         "requiresConsultation": false
       },
@@ -734,7 +735,7 @@
       },
       {
         "name": "Tomografia Axial Computerizada 3D (CBCT)",
-        "description": "Radiografía de alta resolución con menor radiación que un TAC médico convencional (conocida comercialmente como 'TAC 3D completo'). Duración aproximada: unos 30 minutos.",
+        "description": "Radiografía de alta resolución con menor radiación que un TAC médico convencional (conocida comercialmente como 'TAC 3D completo'). Duración aproximada: unos 5 minutos.",
         "priceDescription": "150 €",
         "requiresConsultation": false
       },
@@ -746,7 +747,7 @@
       },
       {
         "name": "Ortopantomografía",
-        "description": "Radiografía útil para caries profundas, dientes retenidos, enfermedades periodontales, planificación de ortodoncia/implantes/cirugías, quistes y fracturas óseas. Duración aproximada: unos 30 minutos.",
+        "description": "Radiografía útil para caries profundas, dientes retenidos, enfermedades periodontales, planificación de ortodoncia/implantes/cirugías, quistes y fracturas óseas. Duración aproximada: unos 5 minutos.",
         "priceDescription": "90 €",
         "requiresConsultation": false
       },
@@ -758,13 +759,13 @@
       },
       {
         "name": "Terapia GBT (Higiene y Desinfección)",
-        "description": "Tecnología AIRFLOW para eliminar biofilm de forma suave y efectiva, incluso en zonas sensibles. Indolora. Conocida comercialmente como 'Guided Biofilm Therapy' (GBT).",
+        "description": "Tecnología AIRFLOW para eliminar biofilm de forma suave y efectiva, incluso en zonas sensibles. Indolora y de aproximadamente 60 minutos por sesión. Conocida comercialmente como 'Guided Biofilm Therapy' (GBT). Para agendar una limpieza operativa, resolver como Mantenimiento periodontal.",
         "priceDescription": "Desde 95 € por sesión",
         "requiresConsultation": false
       },
       {
         "name": "Visita de Urgencia",
-        "description": "Visita de urgencia dental con duración aproximada de 30 minutos. La radiografía solo se realiza si el especialista la considera necesaria.",
+        "description": "Visita de urgencia dental con duración aproximada de 60 minutos. La radiografía solo se realiza si el especialista la considera necesaria.",
         "priceDescription": "50 €",
         "requiresConsultation": false
       },
@@ -782,8 +783,8 @@
       },
       {
         "name": "Obturación de composite",
-        "description": "Tratamiento restaurador (empaste). Solo se agenda directamente a pacientes existentes; un paciente nuevo que cree necesitar un empaste se agenda siempre como Primera Visita para valoración previa.",
-        "priceDescription": "Precio personalizado (se valora en clínica)",
+        "description": "Tratamiento restaurador (empaste). Precio personalizado: se confirma en clínica tras la valoración y no se comunica como cifra cerrada. Solo se agenda directamente a pacientes existentes; un paciente nuevo que crea necesitar un empaste se agenda siempre como Primera Visita para valoración previa.",
+        "priceDescription": "Precio personalizado/se confirma en clínica",
         "requiresConsultation": true
       }
     ]
@@ -877,13 +878,17 @@
       "mode": "model",
       "text": "No se preocupe, su cita sigue en pie: si viene con un poco de retraso le ajustamos la cita para poder atenderle. Si prevé que no podrá llegar dentro del margen indicado, avísenos y le ayudamos a buscar otra hora o lo consultamos con el equipo."
     },
+    "out_of_scope": {
+      "mode": "model",
+      "text": "Soy Vera, la asesora virtual de la Clínica del Dr. Zaragoza Lauber, y solo puedo ayudarle con nuestros servicios, tratamientos y citas. ¿En qué puedo ayudarle?"
+    },
     "task_created": {
       "mode": "model",
       "text": "Un miembro de nuestro equipo se pondrá en contacto a la mayor brevedad posible. O si lo prefiere, puede llamar directamente al 871 172 766."
     },
     "urgency_report": {
       "mode": "model",
-      "text": "Un miembro de nuestro equipo se pondrá en contacto a la mayor brevedad posible. O si lo prefiere, puede llamar directamente al 871 172 766."
+      "text": "Para una urgencia, llame al 662 611 069. Un miembro de nuestro equipo se pondrá en contacto a la mayor brevedad posible."
     },
     "keep_appointment": {
       "mode": "model",
@@ -916,6 +921,10 @@
     "appointment_rescheduled": {
       "mode": "model",
       "text": "Confirmar el cambio indicando SIEMPRE la nueva fecha, la nueva hora y el profesional, tomados del resultado de la tool. Guía de redacción: 'He movido su cita: queda para el [nueva fecha] a las [nueva hora] con [profesional]. Le esperamos.'"
+    },
+    "information_not_available": {
+      "mode": "model",
+      "text": "No tengo esa información en este momento. ¿Desea que lo consulte con el equipo?"
     }
   },
   "toolOrchestration": {
@@ -992,7 +1001,7 @@
             "required": []
           },
           {
-            "note": "Identidad de la tarea: usar SIEMPRE los datos reales del contexto (paciente asociado a la cita o contacto: nombre, apellidos, teléfono). PROHIBIDO enviar placeholders ('Paciente', 'No identificado', 'No disponible', 'desconocido') o inventar datos. Si el nombre no está en el contexto, llamar PRIMERO a lookup_patient con el teléfono del contacto y usar sus datos; si aún así falta el nombre, pedir nombre y apellidos al paciente antes de crear la tarea. Crear tarea urgente con nombre, apellidos, teléfono, descripción detallada de síntomas (dolor, sangrado, traumatismo, pieza rota, inflamación). No hacer triaje clínico. Indicar el teléfono de urgencias 622 611 069 si es una urgencia grave.",
+            "note": "Identidad de la tarea: usar SIEMPRE los datos reales del contexto (paciente asociado a la cita o contacto: nombre, apellidos, teléfono). PROHIBIDO enviar placeholders ('Paciente', 'No identificado', 'No disponible', 'desconocido') o inventar datos. Si el nombre no está en el contexto, llamar PRIMERO a lookup_patient con el teléfono del contacto y usar sus datos; si aún así falta el nombre, pedir nombre y apellidos al paciente antes de crear la tarea. Crear tarea urgente con nombre, apellidos, teléfono, descripción detallada de síntomas (dolor, sangrado, traumatismo, pieza rota, inflamación). No hacer triaje clínico. Indicar el teléfono de urgencias 662 611 069 si es una urgencia grave.",
             "step": 2,
             "tools": [
               "create_task"
@@ -1292,7 +1301,7 @@
             "parallel": false
           },
           {
-            "note": "Liberar preparatoriamente LA cita ya identificada con cancel_for_rescheduling. La cancelación es interna e invisible para el paciente; nunca usar manage_schedule_block_status en este flujo. Si falla, no continuar con disponibilidad ni afirmar que el cambio se ha realizado.",
+            "note": "Identificar y persistir la cita objetivo antes de continuar. Si hay duda, pedir aclaración y no ejecutar acciones.",
             "step": 2,
             "tools": [
               "resolve_reschedule_target"
@@ -1303,7 +1312,7 @@
             ]
           },
           {
-            "note": "Cancelar y liberar preparatoriamente la cita elegible. La cancelación es interna e invisible para el paciente; si falla, detener el flujo y crear tarea.",
+            "note": "Ejecutar cancel_for_rescheduling sobre la cita objetivo antes de buscar disponibilidad. Si falla, detener el flujo y crear tarea; no afirmar que el cambio se ha realizado.",
             "step": 3,
             "tools": [
               "cancel_for_rescheduling"
@@ -1325,7 +1334,7 @@
             ]
           },
           {
-            "note": "Buscar nuevos horarios manteniendo el profesional original como preferencia. Se considera 'actuación' toda cita vinculada a un plan de tratamiento activo (sesiones planificadas / care plan): el bot conoce el tratamiento de la cita (id y nombre) y la categoría se infiere del care plan. Para esas citas, mantener también el mismo espacio; ofrecer únicamente huecos reales que cumplan la política.",
+            "note": "Buscar nuevos horarios manteniendo el profesional original. Si la cita es 'actuación' por estar vinculada a un care plan, mantener también el mismo espacio y ofrecer únicamente huecos reales que cumplan la política.",
             "step": 5,
             "tools": [
               "check_availability"
@@ -1357,6 +1366,18 @@
             ],
             "parallel": false,
             "required": []
+          },
+          {
+            "note": "Restablecer la cita cancelada si el paciente cambia de opinion y el hueco original sigue libre; priorizar el target preparatorio y, si no existe, la ultima cancelacion definitiva.",
+            "step": 8,
+            "tools": [
+              "manage_schedule_block_status"
+            ],
+            "toolActions": ["restore"],
+            "parallel": false,
+            "required": [
+              "hasCancelledRescheduleTarget"
+            ]
           }
         ],
         "intent": "existing_appointment_rescheduling",
@@ -1376,7 +1397,8 @@
           "resolve_availability_query",
           "check_availability",
           "schedule_block",
-          "create_task"
+          "create_task",
+          "manage_schedule_block_status"
         ]
       },
       "pre_surgery_instructions": {
@@ -1652,10 +1674,10 @@
       "MaxExplanationWords: 50 palabras por turno (salvo listados, confirmaciones o información imprescindible).",
       "Brand name comercial: Clínica MZL.",
       "Profesionales: Dr. Manuel Zaragoza Lauber (Director Médico, es/en/de, odontología/cirugía oral/implantología/rehabilitación/odontología digital) y Dra. Laura Genestra Pons (Ortodoncista, ortodoncia/ortopedia dentofacial/odontopediatría).",
-      "Reversión verano 2026 (ejecutada 2026-09-04, autorizada por el asesor): la temporada de vacaciones y el horario especial de agosto ya pasaron y se eliminan TODAS las reglas temporales. Cambios: identity.openingHours vuelve al horario habitual (L-Mi 10:00-15:00 y 15:30-19:00; J-V 09:00-15:00); eliminadas las FAQ '¿Cuál es el horario en agosto?' y '¿Cuándo cierran por vacaciones?' y las menciones al verano en las FAQ de horario y teléfono; eliminada la rule summer_schedule_august_2026 y el template summer_schedule; eliminadas 7 additionalRules temporales (horario continuo 3-14 agosto, texto literal del horario especial, aviso proactivo de cierre, gestión durante el cierre, formato de fechas sin año, mención del cierre al ofrecer huecos, filtro de cierre antes de mostrar agenda); limpiadas las excepciones del cierre en las rules urgency_follow_up, medical_zero_triage, phone_call_inquiry, bank_transfer_inquiry y general_treatments_mon_wed_only, y en los notes de los flows urgency_report, new_patient_booking, existing_patient_rebooking y reschedule_appointment. Efectos: el teléfono de urgencias 622 611 069 vuelve a ofrecerse con normalidad y las fechas vuelven al formato estándar DD/MM/YYYY de styleRules.format. NO se tocaron las reglas permanentes: tratamientos generales solo lunes-miércoles (jueves/viernes = cirugía), limpieza solo con Betina Andrea Vidal (box 3, 60 min), doble filtro de cancelación, reprogramación automática con cancel_for_rescheduling, prioridad de primera visita para pacientes nuevos. Sin nuevos pendientes de backend en esta ronda.",
+      "Reversión verano 2026 (ejecutada 2026-09-04, autorizada por el asesor): la temporada de vacaciones y el horario especial de agosto ya pasaron y se eliminan TODAS las reglas temporales. Cambios: identity.openingHours vuelve al horario habitual (L-Mi 10:00-15:00 y 15:30-19:00; J-V 09:00-15:00); eliminadas las FAQ '¿Cuál es el horario en agosto?' y '¿Cuándo cierran por vacaciones?' y las menciones al verano en las FAQ de horario y teléfono; eliminada la rule summer_schedule_august_2026 y el template summer_schedule; eliminadas 7 additionalRules temporales (horario continuo 3-14 agosto, texto literal del horario especial, aviso proactivo de cierre, gestión durante el cierre, formato de fechas sin año, mención del cierre al ofrecer huecos, filtro de cierre antes de mostrar agenda); limpiadas las excepciones del cierre en las rules urgency_follow_up, medical_zero_triage, phone_call_inquiry, bank_transfer_inquiry y general_treatments_mon_wed_only, y en los notes de los flows urgency_report, new_patient_booking, existing_patient_rebooking y reschedule_appointment. Efectos: el teléfono de urgencias 662 611 069 vuelve a ofrecerse con normalidad y las fechas vuelven al formato estándar DD/MM/YYYY de styleRules.format. NO se tocaron las reglas permanentes: tratamientos generales solo lunes-miércoles (jueves/viernes = cirugía), limpieza solo con Betina Andrea Vidal (box 3, 60 min), doble filtro de cancelación, reprogramación automática con cancel_for_rescheduling, prioridad de primera visita para pacientes nuevos. Sin nuevos pendientes de backend en esta ronda.",
       "Nuevo protocolo pre_surgery_instructions: instrucciones del día anterior a cirugía con texto LITERAL de la clínica (el flow usa responseTemplate literal para que el modelo no recorte ni parafrasee; solo se ordenó en puntos). Con sedación: mismas indicaciones pero 'debe acudir en ayunas' (literal: sin horas, sin explicaciones sobre comer/beber, sin excepciones). Pregunta de clarificación autorizada: '¿su cirugía es con sedación o sin sedación?', sin mencionar anestesia local (el asesor indica que confunde a los pacientes).",
-      "LIMPIEZA REALIZADA RESPECTO AL INPUT PREVIO: se eliminaron del JSON campos no permitidos por el schema canónico para evitar rechazo del backend: (1) En FAQ: propiedad 'condition' en cada item. (2) En rules: propiedades 'reason', 'message', 'priority', 'hidePrice', 'conditions', 'informOnly', 'protocolId', 'conditionLogic', 'requiredFields'. (3) En identity: 'socialLinks' e 'additionalContacts' (la información se conserva en estas notas: Instagram @clinicamzl, Facebook /clinicamzl, WhatsApp 622 897 067, urgencias 622 611 069, parking Sa Gerreria). (4) En serviceCatalog.treatments: propiedad 'category'. (5) En flows: propiedad 'responseTemplateMode'. (6) Intents renombrados a IDs canónicos del template base para compatibilidad con el classifier: appointment_confirmation → existing_appointment_confirmation, appointment_cancellation → existing_appointment_cancellation, appointment_inquiry → existing_appointment_inquiry, scheduling_request → new_appointment_scheduling, patient_running_late → existing_appointment_delay_notice, appointment_reschedule_inquiry → existing_appointment_reschedule_inquiry, appointment_cancellation_inquiry → existing_appointment_cancellation_inquiry, appointment_reschedule_request → existing_appointment_rescheduling, keep_appointment → existing_appointment_keep. Se mantuvieron los intents custom: signature_protocol_inquiry, pre_surgery_inquiry, urgency_report, medication_inquiry.",
-      "Teléfono de urgencias: 622 611 069. WhatsApp clínica: 622 897 067. Teléfono principal: 871 172 766.",
+      "LIMPIEZA REALIZADA RESPECTO AL INPUT PREVIO: se eliminaron del JSON campos no permitidos por el schema canónico para evitar rechazo del backend: (1) En FAQ: propiedad 'condition' en cada item. (2) En rules: propiedades 'reason', 'message', 'priority', 'hidePrice', 'conditions', 'informOnly', 'protocolId', 'conditionLogic', 'requiredFields'. (3) En identity: 'socialLinks' e 'additionalContacts' (la información se conserva en estas notas: Instagram @clinicamzl, Facebook /clinicamzl, WhatsApp 622 897 067, urgencias 662 611 069, parking Sa Gerreria). (4) En serviceCatalog.treatments: propiedad 'category'. (5) En flows: propiedad 'responseTemplateMode'. (6) Intents renombrados a IDs canónicos del template base para compatibilidad con el classifier: appointment_confirmation → existing_appointment_confirmation, appointment_cancellation → existing_appointment_cancellation, appointment_inquiry → existing_appointment_inquiry, scheduling_request → new_appointment_scheduling, patient_running_late → existing_appointment_delay_notice, appointment_reschedule_inquiry → existing_appointment_reschedule_inquiry, appointment_cancellation_inquiry → existing_appointment_cancellation_inquiry, appointment_reschedule_request → existing_appointment_rescheduling, keep_appointment → existing_appointment_keep. Se mantuvieron los intents custom: signature_protocol_inquiry, pre_surgery_inquiry, urgency_report, medication_inquiry.",
+      "Teléfono de urgencias: 662 611 069. WhatsApp clínica: 622 897 067. Teléfono principal: 871 172 766.",
       "Corrección 2026-08-10 (1) - Reprogramaciones: MZL permite reprogramar TODOS los tratamientos. Se prohíbe responder a una reprogramación solo con tarea + 'el equipo te contactará': el bot intenta siempre la reprogramación automática (rule reschedule_request, flow reschedule_appointment) y la tarea queda como último recurso. Nueva restricción estricta para citas catalogadas como 'actuación': la reprogramación mantiene OBLIGATORIAMENTE el mismo profesional y el mismo espacio (sala) de la cita original; nunca se ofrecen huecos con otro profesional ni otro espacio para estas citas. PENDIENTE BACKEND: verificar que el contexto de citas (ASSOCIATED_PATIENTS) expone si una cita está catalogada como 'actuación' y el sala_id/espacio asignado; sin esos datos el bot no puede aplicar la restricción.",
       "Corrección 2026-08-10 (2) - Pacientes nuevos: nueva rule new_patient_first_visit. Si el paciente no aparece en la base de datos (contacto no vinculado y resolve_patient/lookup_patient no lo encuentran), el bot pregunta proactivamente '¿Es la primera vez que acude a la clínica?'; si confirma que es paciente nuevo, la cita se asigna SIEMPRE al tratamiento 'Primera Visita' (gratuita), sea cual sea el tratamiento pedido, re-consultando disponibilidad si ya se habían mostrado huecos de otro tratamiento. Implementado en el flow new_patient_booking (pasos 1 y 4) y en styleRules.additionalRules.",
       "Corrección 2026-08-10 (3) - Agendas colapsadas (aplica general): el bot ya NO pregunta inicialmente qué día u horario le viene bien al paciente. Consulta la disponibilidad real y ofrece directamente los próximos huecos y fechas disponibles; solo si no le sirven, pregunta por sus preferencias para buscar alternativas. Aplicado en: notes de check_availability de los flows new_patient_booking, existing_patient_rebooking y reschedule_appointment, rule scheduling_request, styleRules.additionalRules, errorCategories.scheduling_conflict y templates scheduling_request ('Claro, le busco ahora mismo los próximos huecos disponibles y se los ofrezco directamente.') y reschedule_inquiry ('Claro, puedo buscar ahora mismo los próximos huecos disponibles para mover su cita. ¿Quiere que lo compruebe?'). Además se han vuelto a eliminar los responseTemplate literales de los flows new_patient_booking y existing_patient_rebooking (restaurando la corrección 2026-08-07 (2), que se había revertido en la exportación: el template preguntaba el día preferido en el primer turno, contradiciendo esta política).",
@@ -1689,7 +1711,7 @@
     "recommendedNextSteps": [
       "Validar el draft con node scripts/validate-and-save.js --sede clinica-mzl --mode full",
       "Revisar advisory notes del validador.",
-      "Probar en ambiente de staging antes de producción: verificar que el bot ya no menciona el horario de verano ni el cierre por vacaciones, que el teléfono de urgencias 622 611 069 se ofrece con normalidad y que las fechas se comunican en formato DD/MM/YYYY."
+      "Probar en ambiente de staging antes de producción: verificar que el bot ya no menciona el horario de verano ni el cierre por vacaciones, que el teléfono de urgencias 662 611 069 se ofrece con normalidad y que las fechas se comunican en formato DD/MM/YYYY."
     ]
   },
   "treatmentSelectionGuidance": "Guía de identificación de tratamientos de Clínica MZL (usa los nombres exactos de la agenda). PRIORIDAD OBLIGATORIA: PRIMERO determinar si el paciente es NUEVO o EXISTENTE; si todavía no se sabe, no resolver el tratamiento y preguntar antes si es la primera vez que acude. La regla de paciente nuevo prevalece sobre cualquier palabra de tratamiento, incluida limpieza, higiene, GBT o Airflow.\n- Paciente NUEVO (primera vez en la clínica): nunca se agenda directamente un tratamiento concreto. TODA primera visita se reserva con el tratamiento real de agenda 'Primera Visita', sea cual sea el motivo: ortodoncia, implantes (incluye Protocolo Signature) o cualquier otro (revisión, caries, empaste, limpieza, higiene, GBT, Airflow, estética, dolor no urgente o dudas). 'Primera Visita Ortodoncia' y 'Primera Visita Implantes' son conceptos de conversación, NO tratamientos de agenda: la especialidad es contexto de la conversación, no otro tratamiento.\n- Paciente EXISTENTE: 'limpieza', 'limpieza dental', 'higiene' o 'higiene dental' (a secas, 'básica', 'rápida' o 'con revisión') = SIEMPRE 'Mantenimiento periodontal'. Es la limpieza dental de la clínica: 60 minutos con la higienista. NUNCA resolver una limpieza o higiene genérica como 'Terapia GBT (Higiene y Desinfección)'; para un paciente existente, 'Terapia GBT (Higiene y Desinfección)' solo corresponde cuando menciona expresamente 'GBT' o 'Airflow'.\n- Vocabulario de EVALUACIÓN ('revisión', 'creo que tengo una caries', 'necesito un empaste', 'mirarme un diente') no es diagnóstico: paciente nuevo = 'Primera Visita'; paciente existente que vuelve sin saber qué necesita o con dudas de presupuesto = 'Valoración'; si lleva más de 6 meses sin venir y acepta limpieza = 'Mantenimiento periodontal'.\n- Desambiguación 'Valoración': (a) 'Valoración' es un tratamiento real del catálogo (50 €) SOLO para pacientes existentes que vuelven con dudas o sin saber qué necesitan; (b) la 'valoración' genérica es gratuita y va incluida en la 'Primera Visita' de todo paciente nuevo: no es un tratamiento separado ni se agenda aparte; (c) 'Valoracion ortodoncia' existe solo en el PMS y está PROHIBIDA: nunca la selecciones (la primera visita por ortodoncia se reserva como 'Primera Visita').\n- 'Obturación de composite' (empaste) solo se agenda directamente a pacientes existentes.\n- Las revisiones ('Revisión', 'Revisión ortodoncia braquets', 'Revisión ortodoncia invisible') son solo reagendables: nunca las selecciones para una cita nueva.\n- Si la solicitud no encaja claramente en el catálogo, no adivines ni elijas el tratamiento más parecido: deja la resolución sin resultado para que el flujo cree una tarea de humano."

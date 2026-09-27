@@ -6,6 +6,7 @@
 
 # Node modules (if installed locally)
 node_modules/
+.local/kommo-bots/
 
 # Environment files
 .env

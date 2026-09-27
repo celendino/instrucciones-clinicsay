@@ -102,6 +102,7 @@ export const StructuredLogicJsonSchema = {
                     step: { type: 'number' },
                     tools: { type: 'array', items: { type: 'string', enum: ALL_CHAT_TOOL_NAMES } },
                     parallel: { type: 'boolean' },
+                    toolActions: { type: 'array', items: { type: 'string' } },
                     required: { type: 'array', items: { type: 'string' } },
                     note: { type: ['string', 'null'] },
                   },
