@@ -8,21 +8,22 @@ Esta carpeta contiene las librerías que usan los scripts de validación.
 
 ```
 scripts/lib/
-├── backend-validator/  ← Réplica funcional del validador (se usa con scripts)
+├── backend-validator/  ← Wrappers del validator generado desde el backend
+├── .generated/         ← Copia ignorada del código fuente del backend
 └── schemas/            ← Esquemas JSON exportados
 ```
 
 ---
 
-## backend-validator/ — Réplica funcional del validador
+## backend-validator/ — Wrappers del validator autoritativo
 
-**Qué es:** Versión adaptada del validador del backend, con imports normalizados, que usan los scripts de validación locales.
+**Qué es:** Wrappers que sincronizan y cargan el validator original de `../clinicsay-backend` sin mantener una copia adaptada manualmente.
 
 **Para qué sirve:** Validar los JSONs de clínicas antes de entregarlos. Se usa con:
 - `scripts/validate-and-save.js`
 - `scripts/lib/backend-validator/run-validation.ts`
 
-**Quién lo mantiene:** Solo el administrador del sistema. Los asesores no lo tocan.
+**Quién lo mantiene:** El código fuente se mantiene en `../clinicsay-backend`. Ejecuta `npm run sync:validator` después de cambios del backend.
 
 ---
 
@@ -45,6 +46,6 @@ scripts/lib/
 
 ## Reglas para asesores
 
-- **NO modifiques** nada en `backend-validator/`
+- **NO modifiques** el validator generado ni `scripts/.generated/`
 - Si necesitas que se actualice el validador local, pídeselo al administrador del sistema
-- Si el validador local no detecta un error pero el backend lo rechaza, reporta al administrador — no intentes corregirlo tú
+- Si el validator fuente no está disponible en `../clinicsay-backend`, el sync debe fallar; no uses una copia manual desactualizada

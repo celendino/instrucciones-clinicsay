@@ -426,13 +426,20 @@ En `tasks-only`, `create_task` es opcional. El modo limita scheduling y disponib
 
 ## 🔄 Mantenimiento del validador (solo administrador)
 
-Este repo es **independiente**: incluye una **réplica funcional** del validador del backend en `scripts/lib/backend-validator/`, que usan los scripts de validación (`validate-and-save.js`, `run-validation.ts`).
+Este repo usa el validator **exacto del backend**, sincronizado desde el repo hermano `../clinicsay-backend` a `scripts/.generated/backend-validator/`. Los scripts de validación (`validate-and-save.js`, `run-validation.ts` y `push-sedes-to-db.ts`) cargan esa copia generada.
 
-**Regla clave:** Solo el administrador del sistema actualiza `scripts/lib/backend-validator/`, `_templates/` y `structured-logic-standards.md`, editándolos manualmente cuando el backend cambie. Los asesores no tocan estas carpetas. No existe sincronización automática con el backend.
+**Regla clave:** No edites manualmente el validator generado. Cuando el backend cambie, sincronízalo con:
+
+```bash
+npm run sync:validator
+```
+
+El comando falla si no existe el repo hermano o falta el validator fuente. La copia generada está ignorada por Git; la fuente canónica es siempre `../clinicsay-backend/src/domain/chatbot-instruction-builder/`.
 
 Tras modificar el validador, verifica que los imports siguen funcionando:
 
 ```bash
+npm run sync:validator
 npx tsx scripts/lib/backend-validator/run-validation.ts _templates/base-full.json full
 ```
 

@@ -7,6 +7,7 @@
   "scripts": {
     "fetch:sedes": "tsx scripts/fetch-sedes-from-db.ts",
     "push:sedes": "tsx scripts/push-sedes-to-db.ts",
+    "sync:validator": "tsx scripts/sync-backend-validator.ts",
     "test:push-sedes": "node --test scripts/tests/push-sedes.test.cjs",
     "test:anti-circular": "node --test scripts/tests/anti-circular.test.cjs",
     "validate:full": "tsx scripts/lib/backend-validator/run-validation.ts",

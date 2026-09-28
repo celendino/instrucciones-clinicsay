@@ -18,7 +18,7 @@ import { stdin as input, stdout as output } from 'process';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { Client } from 'pg';
-import { validateStructuredLogic } from './lib/backend-validator/validator';
+import { loadAuthoritativeValidator } from './lib/backend-validator/authoritative-validator';
 
 const require = createRequire(import.meta.url);
 const {
@@ -50,7 +50,10 @@ function formatDatabase(info: ReturnType<typeof describeDatabase>) {
   ].join('\n');
 }
 
-function validatePushFiles(pushes: Array<{ sede: string; modes: Array<{ mode: string; filePath: string; data: unknown }> }>) {
+function validatePushFiles(
+  pushes: Array<{ sede: string; modes: Array<{ mode: string; filePath: string; data: unknown }> }>,
+  validateStructuredLogic: (data: unknown, mode: string) => { valid: boolean; errors: string[] },
+) {
   const errors: string[] = [];
   for (const push of pushes) {
     for (const mode of push.modes) {
@@ -91,7 +94,8 @@ async function main() {
     return;
   }
 
-  const validationErrors = validatePushFiles(pushes);
+  const { validateStructuredLogic } = await loadAuthoritativeValidator();
+  const validationErrors = validatePushFiles(pushes, validateStructuredLogic);
   if (validationErrors.length > 0) {
     throw new Error(`Hay JSONs inválidos. Corrígelos antes del push:\n${validationErrors.join('\n')}`);
   }

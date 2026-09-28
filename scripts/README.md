@@ -41,6 +41,7 @@ bash scripts/sync-agents.sh
 |---|---|---|
 | `fetch-sedes-from-db.ts` | Descarga las sedes desde PostgreSQL a `sedes/` | Para actualizar las carpetas de sedes desde la DB |
 | `push-sedes-to-db.ts` | Sube las sedes desde `sedes/` a PostgreSQL | Para publicar cambios en las sedes a la DB |
+| `sync-backend-validator.ts` | Copia el validator exacto desde `../clinicsay-backend` a la carpeta generada | Antes de validar o publicar tras cambios del backend |
 
 ---
 
@@ -49,7 +50,7 @@ bash scripts/sync-agents.sh
 | Script | Propósito |
 |---|---|
 | `prompts/generate-*.md` | Instrucciones modulares que lee el agente para generar cada sección del JSON |
-| `lib/backend-validator/` | Réplica funcional del validador (ver `lib/README.md`) |
+| `lib/backend-validator/` | Wrappers que cargan el validator generado desde el backend (ver `lib/README.md`) |
 | `lib/schemas/` | Schemas JSON exportados |
 
 ---
@@ -70,9 +71,9 @@ bash scripts/sync-agents.sh
 ## Flujo de trabajo del administrador
 
 ```
-1. El backend cambia (nuevo deploy, nueva regla de validación, nueva tool)
-2. Actualizar scripts/lib/backend-validator/ manualmente
-3. Regenerar scripts/lib/schemas/structured-logic-schema.json (ver README raíz)
+1. El backend cambia (nueva regla de validación o nueva tool)
+2. npm run sync:validator                  ← copiar la fuente exacta del backend
+3. Regenerar scripts/lib/schemas/structured-logic-schema.json si corresponde
 4. Actualizar _templates/ si el default del backend cambió
 5. Actualizar agentes (AGENTS/*.md) si hay nuevas reglas
 6. bash scripts/sync-agents.sh              ← copiar agentes a opencode
