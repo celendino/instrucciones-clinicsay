@@ -448,7 +448,7 @@ npx tsx scripts/lib/backend-validator/run-validation.ts _templates/base-full.jso
 | Artefacto | Fuente canónica | Comando manual |
 |---|---|---|
 | `_templates/base-*.json` | `buildDefaultStructuredLogicForMode(mode)` en `src/domain/chat/default-structured-logic.ts` | `npx tsx -e "import {buildDefaultStructuredLogicForMode as b} from '<backend>/src/domain/chat/default-structured-logic'; import fs from 'fs'; fs.writeFileSync('_templates/base-full.json', JSON.stringify(b('full'), null, 2)); fs.writeFileSync('_templates/base-tasks-only.json', JSON.stringify(b('tasks-only'), null, 2));"` |
-| `scripts/lib/schemas/structured-logic-schema.json` | `StructuredLogicJsonSchema` en `structured-logic-json-schema.ts` | `npx tsx -e "import {StructuredLogicJsonSchema as S} from './scripts/lib/backend-validator/structured-logic-json-schema'; import fs from 'fs'; fs.writeFileSync('scripts/lib/schemas/structured-logic-schema.json', JSON.stringify(S, null, 2));"` |
+| `scripts/lib/schemas/structured-logic-schema.json` | `StructuredLogicJsonSchema` del backend sincronizado | `npm run sync:validator && npx tsx -e "import {StructuredLogicJsonSchema as S} from './scripts/.generated/backend-validator/src/domain/chatbot-instruction-builder/structured-logic-json-schema.ts'; import fs from 'fs'; fs.writeFileSync('scripts/lib/schemas/structured-logic-schema.json', JSON.stringify(S, null, 2));"` |
 
 ### Diagnóstico de leads con comportamiento inesperado
 
