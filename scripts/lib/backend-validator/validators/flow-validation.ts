@@ -225,6 +225,17 @@ export function validateFlowsAndTools(
           );
         }
       });
+
+      const allowedTools = new Set(flow.allowedTools);
+      flow.steps.forEach((step, stepIndex) => {
+        for (const tool of step.tools) {
+          if (!allowedTools.has(tool)) {
+            errors.push(
+              `Flow '${flowName}' step ${stepIndex + 1} references tool '${tool}' which is not listed in allowedTools.`,
+            );
+          }
+        }
+      });
     }
 
     flow.steps.forEach((step, stepIndex) => {
