@@ -158,6 +158,8 @@ export function validateBasicSchema(
     'systemPromptInstructions',
     'conversationResumption',
     'serviceCatalog',
+    'treatmentRouting',
+    'unmatchedTreatmentPolicy',
   ]);
   const unknownKeys = Object.keys(sl).filter((k) => !allowedTopLevelKeys.has(k));
   if (unknownKeys.length > 0) {
